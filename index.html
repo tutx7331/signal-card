@@ -191,6 +191,7 @@
 #card[data-theme="poster"] .lv .d{display:none}
 #card[data-theme="poster"] .stamp{border:0;background:none;transform:none;
   font-size:64px;opacity:.9;top:24px;left:30px;right:auto}
+#card[data-theme="poster"] .foot{order:4}
 
 #card[data-theme="receipt"]{
   --ink:#FAFAF7; --panel:#FFFFFF; --line:#D9D6CE; --dim:#8A8578; --paper:#1A1A17;
@@ -256,8 +257,10 @@
   z-index:7;text-align:center;color:#FF6B5C;font-family:"IBM Plex Mono",monospace;
   font-size:15px;letter-spacing:.5em}
 #card[data-theme="crt"] .head::before{content:"";position:absolute;z-index:8;
-  left:-26px;top:-26px;width:11px;height:11px;border-radius:50%;background:#4A4A44;
-  box-shadow:1032px 0 0 #4A4A44;box-sizing:border-box}
+  left:-26px;right:-26px;top:-26px;height:11px;
+  background:
+    radial-gradient(circle 5.5px at 5.5px 50%,#4A4A44 5.5px,transparent 6px),
+    radial-gradient(circle 5.5px at calc(100% - 5.5px) 50%,#4A4A44 5.5px,transparent 6px)}
 
 /* 霓虹 Neon — 磚牆暗底、發光燈管外框 */
 #card[data-theme="neon"]{
@@ -273,20 +276,6 @@
 #card[data-theme="neon"] .pair{text-shadow:0 0 10px rgba(255,255,255,.55),0 0 26px rgba(0,229,255,.5)}
 #card[data-theme="neon"] .stamp{box-shadow:0 0 10px currentColor,inset 0 0 10px rgba(255,255,255,.15);
   border-radius:10px}
-
-/* 街機 Arcade — 像素階梯邊框、方塊陰影 */
-#card[data-theme="arcade"]{
-  --ink:#101828; --panel:#16203A; --line:#2E4270; --dim:#7E93C4; --paper:#F2F6FF;
-  --long:#4AE54A; --short:#FF4A4A; --gold:#FFD23F;
-  --chartbg:#0A1122; --dot:#24345C; --note:#C8D4F0; --disc:#5E739E;
-  --stampbg:#101828;
-  padding:34px;background:#0A0F1C}
-#card[data-theme="arcade"]::before{content:"";position:absolute;inset:12px;z-index:6;
-  pointer-events:none;
-  box-shadow:0 0 0 6px #FFD23F,0 0 0 12px #0A0F1C,0 0 0 18px #FF4A4A}
-#card[data-theme="arcade"] .pair{font-family:"IBM Plex Mono",monospace;font-weight:600;
-  font-size:44px;text-shadow:4px 4px 0 #FF4A4A}
-#card[data-theme="arcade"] .stamp{border-radius:0;border-width:4px;box-shadow:6px 6px 0 #FFD23F}
 
 /* 底片 Film — 上下齒孔片頭 */
 #card[data-theme="film"]{
@@ -342,8 +331,7 @@
   padding:26px}
 #card[data-theme="vinyl"]::before{content:"";position:absolute;z-index:0;pointer-events:none;
   right:-150px;top:50%;transform:translateY(-50%);width:420px;height:420px;border-radius:50%;
-  background:repeating-radial-gradient(circle,#0A0908 0 3px,#131110 3px 6px);
-  box-shadow:0 0 0 1px #2A2520}
+  background:repeating-radial-gradient(circle,#0A0908 0 3px,#131110 3px 6px)}
 #card[data-theme="vinyl"]::after{content:"";position:absolute;z-index:0;pointer-events:none;
   right:-10px;top:50%;transform:translateY(-50%);width:140px;height:140px;border-radius:50%;
   background:var(--gold);box-shadow:inset 0 0 0 44px #0A0908}
@@ -365,9 +353,21 @@
   background:linear-gradient(90deg,#000080,#1084D0);color:#FFF;
   font-size:14px;font-weight:700;line-height:28px;padding-left:10px;letter-spacing:.05em}
 #card[data-theme="window"]::after{content:"";position:absolute;top:11px;right:12px;z-index:7;
-  width:18px;height:18px;background:#C6C6C6;
-  box-shadow:-22px 0 0 #C6C6C6,-44px 0 0 #C6C6C6,
-             inset 1px 1px 0 #FFF,inset -1px -1px 0 #6A6A6A}
+  width:62px;height:18px;
+  background:
+    linear-gradient(#000,#000) 4px 12px/10px 3px no-repeat,
+    linear-gradient(#000,#000) 26px 3px/10px 2px no-repeat,
+    linear-gradient(#000,#000) 26px 13px/10px 2px no-repeat,
+    linear-gradient(#000,#000) 26px 3px/2px 12px no-repeat,
+    linear-gradient(#000,#000) 34px 3px/2px 12px no-repeat,
+    linear-gradient(45deg,transparent 0 42%,#000 42% 58%,transparent 58%) 47px 3px/12px 12px no-repeat,
+    linear-gradient(-45deg,transparent 0 42%,#000 42% 58%,transparent 58%) 47px 3px/12px 12px no-repeat,
+    linear-gradient(#6A6A6A,#6A6A6A) 0 0/18px 18px no-repeat,
+    linear-gradient(#DEDEDE,#DEDEDE) 1px 1px/16px 16px no-repeat,
+    linear-gradient(#6A6A6A,#6A6A6A) 22px 0/18px 18px no-repeat,
+    linear-gradient(#DEDEDE,#DEDEDE) 23px 1px/16px 16px no-repeat,
+    linear-gradient(#6A6A6A,#6A6A6A) 44px 0/18px 18px no-repeat,
+    linear-gradient(#DEDEDE,#DEDEDE) 45px 1px/16px 16px no-repeat}
 #card[data-theme="window"] .head,#card[data-theme="window"] .chart,
 #card[data-theme="window"] .grid,#card[data-theme="window"] .foot,
 #card[data-theme="window"] .disc{background:var(--panel)}
@@ -412,7 +412,6 @@
 #card[data-dir="SHORT"]{--dir:var(--short)}
 #card[data-dir="NONE"]{--dir:var(--long)}
 
-
 /* ============ 舊風格外殼優化 ============ */
 
 /* 墨夜：內嵌金色髮絲框 + 四角刻痕 + 側邊流水號帶 */
@@ -451,9 +450,11 @@
              linear-gradient(#fff,#fff) 100% 100%/30px 1px no-repeat}
 
 /* 粗獷：整張外推硬陰影 + 右上角貼紙 */
-#card[data-theme="brutal"]{padding:16px}
-#card[data-theme="brutal"]::before{content:"";position:absolute;inset:8px;z-index:6;
-  pointer-events:none;border:4px solid #000;box-shadow:12px 12px 0 rgba(0,0,0,.9)}
+#card[data-theme="brutal"]{padding:18px}
+#card[data-theme="brutal"]::before{content:"";position:absolute;inset:0;z-index:6;
+  pointer-events:none;border:10px solid #000}
+#card[data-theme="brutal"]::after{content:"";position:absolute;inset:14px;z-index:6;
+  pointer-events:none;border:3px solid #000}
 
 /* 黏土：柔和暈染背景襯底 */
 #card[data-theme="clay"]{
@@ -467,8 +468,11 @@
   border-bottom:1px solid var(--line);color:var(--dim);
   font-family:"IBM Plex Mono",monospace;font-size:14px;line-height:36px;padding-left:14px}
 #card[data-theme="terminal"]::after{content:"";position:absolute;right:14px;top:13px;z-index:7;
-  width:10px;height:10px;border-radius:50%;background:#39FF6A;
-  box-shadow:-18px 0 0 #FFD23F,-36px 0 0 #FF4040}
+  width:46px;height:10px;
+  background:
+    radial-gradient(circle 5px at 5px 50%,#FF4040 5px,transparent 5.5px),
+    radial-gradient(circle 5px at 23px 50%,#FFD23F 5px,transparent 5.5px),
+    radial-gradient(circle 5px at 41px 50%,#39FF6A 5px,transparent 5.5px)}
 
 /* 報紙：報頭刊次帶 + 邊緣毛邊 */
 #card[data-theme="news"]{padding:0 14px 14px;background:#E6DFCC}
@@ -488,8 +492,10 @@
   pointer-events:none;border:1px solid rgba(217,188,122,.75);
   box-shadow:inset 0 0 0 5px transparent,inset 0 0 0 6px rgba(217,188,122,.35)}
 #card[data-theme="luxe"]::after{content:"◆";position:absolute;left:0;right:0;top:16px;z-index:7;
-  text-align:center;color:var(--gold);font-size:13px;
-  text-shadow:0 1026px 0 var(--gold)}
+  text-align:center;color:var(--gold);font-size:13px}
+#card[data-theme="luxe"] .disc{position:relative}
+#card[data-theme="luxe"] .disc::after{content:"◆";position:absolute;left:0;right:0;bottom:-20px;
+  text-align:center;color:var(--gold);font-size:13px}
 
 /* 票根：票根加條碼 + 撕線圓孔 */
 #card[data-theme="stub"]::before{content:"";position:absolute;left:22px;top:56px;
@@ -598,16 +604,24 @@
   --long:#009B48; --short:#E02020; --gold:#0057B8;
   --chartbg:#EEF1F4; --dot:#D6DBE1; --note:#2A3138; --disc:#8A939C;
   --stampbg:#FFFFFF;
-  padding:24px;background:#101418;border-radius:26px}
+  padding:24px;background:#101418;border-radius:0}
+
 #card[data-theme="subway"] .head,#card[data-theme="subway"] .chart,
 #card[data-theme="subway"] .grid,#card[data-theme="subway"] .foot,
 #card[data-theme="subway"] .disc{background:#FFFFFF}
-#card[data-theme="subway"] .head{border-radius:16px 16px 0 0;border-bottom:4px solid var(--gold)}
-#card[data-theme="subway"] .disc{border-radius:0 0 16px 16px;text-align:center}
+#card[data-theme="subway"] .head{border-radius:18px 18px 0 0;border-bottom:4px solid var(--gold)}
+#card[data-theme="subway"] .disc{border-radius:0 0 18px 18px;text-align:center}
 #card[data-theme="subway"] .pair{font-size:52px}
-#card[data-theme="subway"] .stamp{border-radius:999px;border-width:5px;transform:none;
-  width:120px;height:120px;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;font-size:24px;padding:0}
+#card[data-theme="subway"] .stamp{border:0;transform:none;border-radius:12px;
+  right:28px;top:28px;padding:0;overflow:hidden;background:#101418;
+  width:auto;min-width:186px;display:block;text-align:center;
+  font-family:"Noto Sans TC",sans-serif;font-weight:900;
+  font-size:34px;letter-spacing:.06em;line-height:1;color:#FFF}
+#card[data-theme="subway"] .stamp::before{content:"";display:block;height:10px;
+  background:var(--dir)}
+#card[data-theme="subway"] .stamp small{display:block;font-size:15px;font-weight:500;
+  letter-spacing:.34em;color:var(--dir);opacity:1;margin:8px 0 0;padding-bottom:16px}
+#card[data-theme="subway"] .stamp::after{content:"";display:block;height:0}
 
 /* 全息卡 Holo — 彩虹箔漸層外框、卡角圓潤 */
 #card[data-theme="holo"]{
@@ -643,7 +657,7 @@
      repeating-linear-gradient(135deg,#C0392B 0 14px,#FDFCF8 14px 28px,
              #1E4C8A 28px 42px,#FDFCF8 42px 56px) 100% 0/22px 100% no-repeat}
 #card[data-theme="airmail"]::after{content:"AIR MAIL · PAR AVION";position:absolute;
-  right:34px;top:34px;z-index:7;border:2px solid #1E4C8A;color:#1E4C8A;
+  right:356px;top:34px;z-index:7;border:2px solid #1E4C8A;color:#1E4C8A;
   padding:6px 12px;font-size:12px;letter-spacing:.3em;transform:rotate(-4deg)}
 
 /* X 光片 Xray — 深藍透光片、燈箱邊夾 */
@@ -658,8 +672,10 @@
   z-index:7;background:linear-gradient(180deg,#2A3A48,#16222E);
   border-bottom:1px solid #3E5468}
 #card[data-theme="xray"]::after{content:"";position:absolute;top:8px;z-index:8;
-  left:200px;width:70px;height:18px;background:#5A6E80;border-radius:3px;
-  box-shadow:610px 0 0 #5A6E80}
+  left:200px;right:200px;height:18px;
+  background:
+    linear-gradient(#5A6E80,#5A6E80) left/70px 100% no-repeat,
+    linear-gradient(#5A6E80,#5A6E80) right/70px 100% no-repeat}
 #card[data-theme="xray"] .chart{box-shadow:inset 0 0 90px rgba(150,200,240,.14)}
 
 /* 粗獷 Neo-Brutalism — 酸黃底、純黑硬邊、位移陰影 */
@@ -676,8 +692,8 @@
 #card[data-theme="brutal"] .head .now,
 #card[data-theme="brutal"] .levels{border-left-width:4px;border-right-width:4px}
 #card[data-theme="brutal"] .lv .d{border-bottom:0}
-#card[data-theme="brutal"] .stamp{border-width:4px;border-radius:0;box-shadow:7px 7px 0 #000;
-  color:#000;background:#fff}
+#card[data-theme="brutal"] .stamp{border-style:solid;border-color:#000;border-radius:0;
+  border-width:4px 12px 12px 4px;color:#000;background:#fff}
 #card[data-theme="brutal"] .stamp small{color:#000}
 #card[data-theme="brutal"] .bar{border-width:3px}
 #card[data-theme="brutal"] .disc{border-top-width:4px}
@@ -685,11 +701,18 @@
 
 *{box-sizing:border-box}
 body{margin:0;background:#07090B;color:var(--paper);
-  font-family:"Noto Sans TC",system-ui,sans-serif;}
-.nav{display:flex;align-items:center;gap:8px;padding:14px 28px;border-bottom:1px solid var(--line);
-  background:var(--panel);position:sticky;top:0;z-index:50;flex-wrap:wrap}
-.navlabel{font-size:11px;letter-spacing:.24em;color:var(--dim);margin-right:8px}
-.nav button{padding:8px 16px;border-radius:999px;border:1px solid var(--line);background:#0B0E12;
+  font-family:"Noto Sans TC",system-ui,sans-serif;
+  padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+.nav{display:flex;align-items:center;gap:8px;padding:14px 28px 10px;border-bottom:1px solid var(--line);
+  background:var(--panel);position:sticky;top:0;z-index:50;flex-wrap:nowrap;
+  overflow-x:auto;-webkit-overflow-scrolling:touch;
+  scrollbar-width:thin;scrollbar-color:var(--line) transparent;
+  padding-top:calc(14px + env(safe-area-inset-top))}
+.nav::-webkit-scrollbar{height:6px}
+.nav::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
+.nav::-webkit-scrollbar-track{background:transparent}
+.navlabel{flex:0 0 auto;font-size:11px;letter-spacing:.24em;color:var(--dim);margin-right:8px}
+.nav button{flex:0 0 auto;padding:8px 16px;border-radius:999px;border:1px solid var(--line);background:#0B0E12;
   color:var(--dim);font-family:inherit;font-size:12px;font-weight:700;letter-spacing:.08em;cursor:pointer}
 .nav button.on{border-color:var(--gold);color:var(--gold);background:rgba(216,162,74,.10)}
 .wrap{display:grid;grid-template-columns:400px 1fr;gap:28px;padding:28px;align-items:start}
@@ -744,7 +767,7 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--gold);outline-of
 .chart img{position:absolute;left:50%;top:50%;width:auto;height:auto;
   max-width:none;max-height:none;object-fit:none;display:block;
   transform-origin:center center;cursor:grab;user-select:none;-webkit-user-drag:none;
-  image-rendering:auto}
+  touch-action:none;image-rendering:auto}
 .chart img.dragging{cursor:grabbing}
 /* 方向章：撕票根上的印記 */
 .stamp{position:absolute;z-index:3;right:26px;top:26px;border:2px solid var(--dir);color:var(--dir);
@@ -783,6 +806,42 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--gold);outline-of
 .rrval{white-space:nowrap}
 .disc{position:relative;z-index:1;flex:0 0 auto;border-top:1px solid var(--line);padding:14px 30px 18px;
   font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.08em;color:var(--disc)}
+
+/* ===== 版面模式 ===== */
+#card[data-mode="tall"]{height:auto}
+#card[data-mode="tall"] .chart{flex:0 0 auto;height:auto;min-height:140px}
+#card[data-mode="tall"] .chart img{position:static;left:auto;top:auto;
+  width:100%;height:auto;max-width:100%;transform:none !important;cursor:default}
+/* --- 純字卡：方向浮水印為視覺主體，價格列放大置中 --- */
+#card[data-mode="text"] .chart{display:none}
+#card[data-mode="text"] .grid{position:relative;flex:1 1 auto;display:flex;flex-direction:column;
+  justify-content:center;border-bottom:1px solid var(--line);overflow:hidden}
+#card[data-mode="text"][data-dir="LONG"] .grid::before,
+#card[data-mode="text"][data-dir="SHORT"] .grid::before{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  font-family:"Archivo Black",sans-serif;font-size:240px;letter-spacing:.02em;
+  color:var(--dir);opacity:.08;pointer-events:none;white-space:nowrap;z-index:0}
+#card[data-mode="text"][data-dir="LONG"] .grid::before{content:"LONG"}
+#card[data-mode="text"][data-dir="SHORT"] .grid::before{content:"SHORT"}
+#card[data-mode="text"] .levels,#card[data-mode="text"] .notes{position:relative;z-index:1}
+#card[data-mode="text"] .levels{display:block;border-right:0;width:100%;max-width:780px;
+  margin:0 auto;padding:8px 44px 24px}
+#card[data-mode="text"] .lv{display:flex;flex-direction:row;align-items:baseline;gap:14px;
+  padding:17px 0;border:0}
+#card[data-mode="text"] .lv .n{width:auto;font-size:15px;letter-spacing:.22em}
+#card[data-mode="text"] .lv .d{display:block;flex:1;border-bottom:1px dotted var(--dot);
+  transform:translateY(-7px)}
+#card[data-mode="text"] .lv .p{font-size:42px;margin-left:0}
+#card[data-mode="text"] .notes{flex-direction:row;gap:44px;width:100%;max-width:860px;
+  margin:0 auto;padding:24px 44px 30px;border-top:1px solid var(--line)}
+#card[data-mode="text"] .notes>div{flex:1}
+#card[data-mode="text"] .notes li{font-size:16px;line-height:2}
+/* 票頭補一行方向色字（各主題自動吃自己的多空色） */
+#card[data-mode="text"] .now::after{display:block;margin-top:10px;
+  font-family:"Archivo Black",sans-serif;font-size:18px;letter-spacing:.16em;color:var(--dir)}
+#card[data-mode="text"][data-dir="LONG"] .now::after{content:"LONG · 多單"}
+#card[data-mode="text"][data-dir="SHORT"] .now::after{content:"SHORT · 空單"}
+
 /* ============ 響應式：手機 ============ */
 @media(max-width:980px){
   .wrap{grid-template-columns:1fr !important;padding:12px;gap:14px}
@@ -790,6 +849,7 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--gold);outline-of
   .stage{order:1}
   /* 手機：風格列不固定在頂端，隨頁面捲走，避免遮住內容 */
   .nav{position:static !important;padding:10px 12px;
+    padding-top:calc(10px + env(safe-area-inset-top));
     flex-wrap:nowrap !important;overflow-x:auto;
     -webkit-overflow-scrolling:touch;scrollbar-width:none}
   .nav::-webkit-scrollbar{display:none}
@@ -823,7 +883,6 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--gold);outline-of
   <button data-t="editorial">雜誌 Editorial</button>
   <button data-t="crt">映像管 CRT</button>
   <button data-t="neon">霓虹 Neon</button>
-  <button data-t="arcade">街機 Arcade</button>
   <button data-t="film">底片 Film</button>
   <button data-t="polaroid">拍立得 Polaroid</button>
   <button data-t="boarding">登機證 Boarding</button>
@@ -844,7 +903,7 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--gold);outline-of
   <button data-t="news">報紙 Newsprint</button>
   <button data-t="mono">純黑白 Mono</button>
   <button data-t="luxe">精品金 Luxe</button>
-  <span class="navlabel" style="margin-left:auto;margin-right:0">v1.1.1</span>
+  <span class="navlabel" style="margin-left:auto;margin-right:0">v1.2.7</span>
 </div>
 <div class="wrap">
 <div class="panel">
@@ -863,6 +922,13 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--gold);outline-of
     <button data-v="SHORT">空單 SHORT</button>
     <button data-v="NONE">不顯示章</button>
   </div>
+
+  <label>版面模式</label>
+  <select id="f_mode">
+    <option value="square">方形 1080×1080（IG）</option>
+    <option value="tall">長圖 · 截圖完整顯示</option>
+    <option value="text">純字卡 1080×1080</option>
+  </select>
 
   <div class="row">
     <div><label>當前價格</label><input id="f_now" value="64,298.6"></div>
@@ -907,9 +973,8 @@ Volume Profile 支撐
     <label>縮放</label><input id="f_zoom" type="range" min="10" max="400" value="100" style="padding:0">
     <div class="hint" id="zoominfo" style="margin-top:6px">原圖 0×0　顯示 100%</div>
     <div class="hint" style="margin-top:4px">預覽圖上<b>直接拖曳</b>移動，<b>滾輪</b>縮放。100% = 原圖像素 1:1。</div>
-    <div class="seg" style="grid-template-columns:1fr 1fr 1fr;margin-top:8px">
-      <button id="imgfitw">符合寬度</button>
-      <button id="imgfill">填滿</button>
+    <div class="seg" style="grid-template-columns:1fr 1fr;margin-top:8px">
+      <button id="imgfill">填滿重設</button>
       <button id="imgreset">1:1 原圖</button>
     </div>
   </div>
@@ -1002,6 +1067,8 @@ function render(){
   if(dir!=="NONE"){
     $("c_stamp").firstChild.textContent=dir;
     $("c_stampzh").textContent=dir==="LONG"?"多單":"空單";
+    $("c_stamp").dataset.en=dir;
+    $("c_stamp").dataset.zh=(dir==="LONG"?"多單":"空單");
   }
   $("c_bn").textContent=$("f_bn").value;
   $("c_bs").textContent=$("f_bs").value;
@@ -1019,6 +1086,7 @@ function render(){
   $("c_bs").style.display=$("f_lshow").value==="1"?"":"none";
   $("c_disc").textContent=$("f_disc").value;
   lines($("f_a").value,$("c_a")); lines($("f_b").value,$("c_b"));
+  requestAnimationFrame(()=>{applyTf();fit();});
 }
 document.querySelectorAll(".panel input,.panel textarea,.panel select").forEach(el=>{
   el.addEventListener("input",render); el.addEventListener("change",render);
@@ -1034,16 +1102,24 @@ $("dirseg").addEventListener("click",e=>{
 let imgTf={x:0,y:0,z:1};
 function applyTf(){
   const im=$("chart").querySelector("img"); if(!im)return;
+  const mode=$("card").dataset.mode||"square";
+  if(mode==="square"&&im.naturalWidth){
+    const c=$("chart"),cw=c.clientWidth,ch=c.clientHeight;
+    const minZ=Math.max(cw/im.naturalWidth,ch/im.naturalHeight);
+    imgTf.z=Math.min(minZ*4,Math.max(minZ,imgTf.z));
+    const mx=Math.max(0,(im.naturalWidth*imgTf.z-cw)/2);
+    const my=Math.max(0,(im.naturalHeight*imgTf.z-ch)/2);
+    imgTf.x=Math.min(mx,Math.max(-mx,imgTf.x));
+    imgTf.y=Math.min(my,Math.max(-my,imgTf.y));
+  }
   im.style.transform="translate(-50%,-50%) translate("+imgTf.x+"px,"+imgTf.y+"px) scale("+imgTf.z+")";
   $("f_zoom").value=Math.round(imgTf.z*100);
-  const z=$("zoominfo");
-  if(z) z.textContent="原圖 "+(im.naturalWidth||0)+"×"+(im.naturalHeight||0)
-        +"　顯示 "+Math.round(imgTf.z*100)+"%";
-}
-function fitWidth(){
-  const im=$("chart").querySelector("img"); if(!im||!im.naturalWidth)return;
-  const cw=$("chart").clientWidth||1080;
-  imgTf={x:0,y:0,z:cw/im.naturalWidth}; applyTf();
+  const zi=$("zoominfo");
+  if(zi){
+    const c=$("chart");
+    zi.textContent="原圖 "+(im.naturalWidth||0)+"×"+(im.naturalHeight||0)
+      +"　顯示 "+Math.round(imgTf.z*100)+"%　圖框 "+c.clientWidth+"×"+c.clientHeight;
+  }
 }
 function fillArea(){
   const im=$("chart").querySelector("img"); if(!im||!im.naturalWidth)return;
@@ -1051,40 +1127,74 @@ function fillArea(){
   imgTf={x:0,y:0,z:Math.max(c.clientWidth/im.naturalWidth,c.clientHeight/im.naturalHeight)};
   applyTf();
 }
+function applyMode(){
+  const m=($("f_mode")&&$("f_mode").value)||"square";
+  $("card").dataset.mode=m;
+  const hasImg=!!$("chart").querySelector("img");
+  $("imgctl").style.display=(m==="square"&&hasImg)?"block":"none";
+  const dl=$("drop");
+  if(dl){dl.style.display=(m==="text")?"none":"";
+    const lb=dl.previousElementSibling;
+    if(lb&&lb.tagName==="LABEL")lb.style.display=(m==="text")?"none":"";}
+  requestAnimationFrame(()=>{applyTf();fit();});
+}
 function setImg(file){
   if(!file||!file.type.startsWith("image/"))return;
   const url=URL.createObjectURL(file);
   const c=$("chart");
   c.querySelectorAll("img,span").forEach(n=>n.remove());
   const img=new Image(); img.draggable=false;
-  img.onload=()=>{ imgTf={x:0,y:0,z:1}; applyTf(); };
+  img.onload=()=>{ fillArea(); fit(); };
   img.src=url; c.prepend(img);
   imgTf={x:0,y:0,z:1};
-  $("imgctl").style.display="block";
+  applyMode();
   attachDrag(img);
 }
 function attachDrag(img){
-  let sx=0,sy=0,ox=0,oy=0,on=false;
-  const down=e=>{on=true;img.classList.add("dragging");
-    const p=e.touches?e.touches[0]:e; sx=p.clientX;sy=p.clientY;ox=imgTf.x;oy=imgTf.y;
-    e.preventDefault();};
-  const move=e=>{if(!on)return;
-    const p=e.touches?e.touches[0]:e;
-    const sc=$("scaler").getBoundingClientRect().width/1082||1;
-    imgTf.x=ox+(p.clientX-sx)/sc; imgTf.y=oy+(p.clientY-sy)/sc; applyTf(); e.preventDefault();};
-  const up=()=>{on=false;img.classList.remove("dragging");};
-  img.addEventListener("mousedown",down); img.addEventListener("touchstart",down,{passive:false});
-  window.addEventListener("mousemove",move); window.addEventListener("touchmove",move,{passive:false});
-  window.addEventListener("mouseup",up); window.addEventListener("touchend",up);
-  img.addEventListener("wheel",e=>{
+  const active=()=>($("card").dataset.mode||"square")==="square";
+  const sc=()=>$("scaler").getBoundingClientRect().width/1082||1;
+  let drag=null, pinch=null;
+  img.addEventListener("mousedown",e=>{if(!active())return;
+    drag={sx:e.clientX,sy:e.clientY,ox:imgTf.x,oy:imgTf.y};
+    img.classList.add("dragging");e.preventDefault();});
+  window.addEventListener("mousemove",e=>{if(!drag)return;const s=sc();
+    imgTf.x=drag.ox+(e.clientX-drag.sx)/s;imgTf.y=drag.oy+(e.clientY-drag.sy)/s;applyTf();});
+  window.addEventListener("mouseup",()=>{drag=null;img.classList.remove("dragging");});
+  img.addEventListener("touchstart",e=>{if(!active())return;
+    if(e.touches.length===1){const p=e.touches[0];
+      drag={sx:p.clientX,sy:p.clientY,ox:imgTf.x,oy:imgTf.y};}
+    else if(e.touches.length>=2){drag=null;
+      const a=e.touches[0],b=e.touches[1];
+      const r=$("chart").getBoundingClientRect(),s=sc();
+      pinch={d0:Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY),z0:imgTf.z,
+        mx:((a.clientX+b.clientX)/2-(r.left+r.width/2))/s,
+        my:((a.clientY+b.clientY)/2-(r.top+r.height/2))/s,
+        tx:imgTf.x,ty:imgTf.y};}
+    e.preventDefault();},{passive:false});
+  window.addEventListener("touchmove",e=>{
+    if(pinch&&e.touches.length>=2){
+      const a=e.touches[0],b=e.touches[1];
+      const k=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY)/pinch.d0;
+      imgTf.z=pinch.z0*k;
+      imgTf.x=pinch.mx-(imgTf.z/pinch.z0)*(pinch.mx-pinch.tx);
+      imgTf.y=pinch.my-(imgTf.z/pinch.z0)*(pinch.my-pinch.ty);
+      applyTf(); e.preventDefault(); return;}
+    if(!drag||!e.touches.length)return;
+    const p=e.touches[0],s=sc();
+    imgTf.x=drag.ox+(p.clientX-drag.sx)/s; imgTf.y=drag.oy+(p.clientY-drag.sy)/s;
+    applyTf(); e.preventDefault();},{passive:false});
+  window.addEventListener("touchend",e=>{
+    if(e.touches.length<2)pinch=null;
+    if(!e.touches.length)drag=null;});
+  img.addEventListener("wheel",e=>{if(!active())return;
     e.preventDefault();
-    imgTf.z=Math.min(3,Math.max(.5,imgTf.z*(e.deltaY<0?1.06:0.94))); applyTf();
+    imgTf.z*=e.deltaY<0?1.06:0.94; applyTf();
   },{passive:false});
 }
 $("f_zoom").addEventListener("input",e=>{imgTf.z=e.target.value/100;applyTf()});
 $("imgreset").onclick=()=>{imgTf={x:0,y:0,z:1};applyTf()};
-$("imgfitw").onclick=fitWidth;
 $("imgfill").onclick=fillArea;
+$("f_mode").addEventListener("change",applyMode);
 
 $("ldrop").onclick=()=>$("lfile").click();
 $("lfile").onchange=e=>{
@@ -1108,6 +1218,12 @@ $("nav").addEventListener("click",e=>{
   document.querySelectorAll("#nav button").forEach(x=>x.classList.toggle("on",x===b));
   render();
 });
+$("nav").addEventListener("wheel",e=>{
+  const n=e.currentTarget;
+  if(n.scrollWidth>n.clientWidth&&Math.abs(e.deltaY)>Math.abs(e.deltaX)){
+    n.scrollLeft+=e.deltaY; e.preventDefault();
+  }
+},{passive:false});
 
 $("drop").onclick=()=>$("file").click();
 $("file").onchange=e=>setImg(e.target.files[0]);
@@ -1124,31 +1240,58 @@ function fit(){
   const st=document.querySelector(".stage");
   const s=Math.min(1,st.clientWidth/1082);
   $("scaler").style.transform="scale("+s+")";
-  st.style.height=(1082*s+20)+"px";
+  st.style.height=($("card").offsetHeight*s+20)+"px";
 }
 window.addEventListener("resize",fit);
 
 async function shot(){
   const sc=$("scaler"), t=sc.style.transform;
   window.scrollTo(0,0);
-  sc.style.transform="none";
-  await new Promise(r=>setTimeout(r,80));
-  const cs=getComputedStyle($("card"));
+  /* 關鍵：把卡片移出縮放層，確保截圖時沒有任何祖先 transform */
+  const holder=document.createElement("div");
+  holder.style.cssText="position:fixed;left:0;top:0;width:1080px;z-index:-1;"+
+    "opacity:1;pointer-events:none;overflow:visible";
+  document.body.appendChild(holder);
+  holder.appendChild($("card"));
+  await new Promise(r=>setTimeout(r,140));
+  const card=$("card");
+  const chart=$("chart");
+  const im=chart.querySelector("img");
+  const mode=card.dataset.mode||"square";
+  const S=(document.getElementById("f_exp2x")||{}).checked?2:1;
+  let snap=null, imDisp=null;
+  /* 只有方形模式的圖片帶 transform，需要烘焙；
+     長圖模式沒有變換，且圖框高度由圖片本身撐開，藏圖會讓容器塌陷 */
+  if(mode==="square"&&im&&im.naturalWidth&&chart.clientWidth>0){
+    const cw=chart.clientWidth, ch=chart.clientHeight;
+    snap=document.createElement("canvas");
+    snap.width=Math.round(cw*S); snap.height=Math.round(ch*S);  /* 依匯出倍率提高畫素 */
+    const g2=snap.getContext("2d");
+    g2.imageSmoothingEnabled=true; g2.imageSmoothingQuality="high";
+    g2.scale(S,S);
+    const w=im.naturalWidth*imgTf.z, h=im.naturalHeight*imgTf.z;
+    g2.drawImage(im, cw/2+imgTf.x-w/2, ch/2+imgTf.y-h/2, w, h);
+    snap.style.cssText="position:absolute;inset:0;width:100%;height:100%";
+    imDisp=im.style.display; im.style.display="none";
+    chart.prepend(snap);
+    await new Promise(r=>requestAnimationFrame(r));
+  }
+  const cs=getComputedStyle(card);
   const grad=cs.backgroundImage&&cs.backgroundImage!=="none";
   const bg=grad?null:(cs.backgroundColor||"#0B0D10");
-  const S=(document.getElementById("f_exp2x")||{}).checked?2:1;
-  const cv=await html2canvas($("card"),{
-    backgroundColor:bg,scale:S,useCORS:true,
-    width:1080,height:1080,windowWidth:1200,windowHeight:1400,
-    scrollX:0,scrollY:-window.scrollY
-  });
+  const H=card.clientHeight; /* 方形=1080；長圖=實際內容高 */
+  const cv=await html2canvas(card,{backgroundColor:bg,scale:S,useCORS:true,logging:false});
+  if(snap){snap.remove(); im.style.display=imDisp;}
+  sc.appendChild($("card"));      /* 搬回預覽層 */
+  holder.remove();
   sc.style.transform=t;
-  const N=1080*S;
+  fit();
   const out=document.createElement("canvas");
-  out.width=out.height=N;
+  out.width=1080*S; out.height=H*S;
   const g=out.getContext("2d");
-  g.fillStyle=bg||cs.backgroundColor||"#0B0D10";g.fillRect(0,0,N,N);
-  g.drawImage(cv,0,0,N,N);
+  g.fillStyle=bg||cs.backgroundColor||"#0B0D10";
+  g.fillRect(0,0,out.width,out.height);
+  g.drawImage(cv,0,0,out.width,out.height);   /* 完整畫入，不裁邊 */
   return out;
 }
 $("save").onclick=async()=>{
@@ -1167,7 +1310,7 @@ $("copy").onclick=async()=>{
 
 /* ---- 設定記憶：品牌、風格、免責聲明會被保留 ---- */
 const SKEY="signalcard.v1";
-const PERSIST=["f_bn","f_bs","f_disc","f_tf","f_lh","f_lshow"];
+const PERSIST=["f_bn","f_bs","f_disc","f_tf","f_lh","f_lshow","f_mode"];
 function saveCfg(){
   try{
     const o={theme:$("card").dataset.theme||"ink",logo:$("c_logo").getAttribute("src")||""};
@@ -1195,7 +1338,8 @@ document.querySelectorAll(".panel input,.panel textarea,.panel select")
   .forEach(el=>el.addEventListener("change",saveCfg));
 $("nav").addEventListener("click",saveCfg);
 
-loadCfg(); render(); setTimeout(fit,300); window.addEventListener("load",fit);
+loadCfg(); applyMode(); render(); setTimeout(fit,300); window.addEventListener("load",fit);
+if(window.ResizeObserver)new ResizeObserver(()=>fit()).observe($("card"));
 
 /* ---- Service Worker ---- */
 if("serviceWorker" in navigator){
