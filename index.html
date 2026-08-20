@@ -1,0 +1,1204 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="交易報單圖產生器 — 填入進出場價位、丟一張盤面截圖，輸出 1080×1080 分享圖。支援 25 種版型，全在瀏覽器端運算，不上傳任何資料。">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0B0D10">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="報單圖">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<title>報單圖產生器 · Signal Card</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=IBM+Plex+Mono:wght@400;600&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+:root{
+  --ink:#0B0D10;        /* 卡底 */
+  --panel:#12161C;      /* 面板 */
+  --line:#2A323D;       /* 描邊 */
+  --dim:#7C8899;        /* 次要字 */
+  --paper:#EDEFF2;      /* 主字 */
+  --long:#22C58B;
+  --short:#FF5C5C;
+  --gold:#D8A24A;       /* 品牌強調 */
+  --dir:var(--long);
+  --grid:rgba(255,255,255,.022);
+  --chartbg:#080A0D;
+  --dash:#1E242C;
+  --dot:#262E38;
+  --note:#C6CEDA;
+  --disc:#5A6472;
+  --stampbg:rgba(11,13,16,.72);
+}
+/* 日光 — 米白票據，鈍金與墨黑 */
+#card[data-theme="paper"]{
+  --ink:#F4F1EA; --panel:#FFFFFF; --line:#D6D1C6; --dim:#7D7768; --paper:#14181D;
+  --long:#0E9F6E; --short:#D64545; --gold:#A8761C;
+  --grid:rgba(0,0,0,.030); --chartbg:#EAE6DC; --dash:#DCD7CB; --dot:#CFC9BB;
+  --note:#3C4249; --disc:#8A8474; --stampbg:rgba(244,241,234,.78);
+}
+
+/* 黏土 Clay — 柔和粉彩，圓潤厚實 */
+#card[data-theme="clay"]{
+  --ink:#EFE7F7; --panel:#FFFFFF; --line:#DCCFEA; --dim:#7C6B92; --paper:#2E2440;
+  --long:#3FA98A; --short:#E5657D; --gold:#8B6BB1;
+  --chartbg:#E4D9F1; --dot:#D3C4E4; --note:#4A3D5E; --disc:#9C8DB0;
+  --stampbg:rgba(255,255,255,.85)}
+#card[data-theme="clay"] .stamp{border-radius:18px;border-width:0;
+  box-shadow:0 8px 20px rgba(70,40,110,.18)}
+
+/* 終端機 Terminal — 磷光綠等寬，駭客感 */
+#card[data-theme="terminal"]{
+  --ink:#000000; --panel:#0A0F0A; --line:#1E3D1E; --dim:#4F9E4F; --paper:#B8FFB8;
+  --long:#39FF6A; --short:#FF4040; --gold:#7CFF7C;
+  --chartbg:#000000; --dot:#153015; --note:#8FE68F; --disc:#3D7A3D;
+  --stampbg:rgba(0,0,0,.8)}
+#card[data-theme="terminal"] .pair,
+#card[data-theme="terminal"] .stamp,
+#card[data-theme="terminal"] .rrval,
+#card[data-theme="terminal"] .brand .bn{font-family:"IBM Plex Mono",monospace;font-weight:600}
+
+/* 報紙 Newsprint — 米黃紙、墨黑、單一紅 */
+#card[data-theme="news"]{
+  --ink:#F0EAD9; --panel:#FFFFFF; --line:#C9BFA6; --dim:#6E6552; --paper:#12100C;
+  --long:#1A1A1A; --short:#C0281E; --gold:#6E6552;
+  --chartbg:#E4DCC6; --dot:#CFC5AC; --note:#2E2A22; --disc:#8A8069;
+  --stampbg:rgba(240,234,217,.85)}
+#card[data-theme="news"] .stamp{border-width:3px;border-radius:0;transform:none}
+
+/* 純黑白 Mono — 極高對比，無彩色 */
+#card[data-theme="mono"]{
+  --ink:#000000; --panel:#0A0A0A; --line:#333333; --dim:#888888; --paper:#FFFFFF;
+  --long:#FFFFFF; --short:#FFFFFF; --gold:#FFFFFF;
+  --chartbg:#080808; --dot:#2A2A2A; --note:#D5D5D5; --disc:#666666;
+  --stampbg:rgba(0,0,0,.8)}
+#card[data-theme="mono"] .lv.sl .p{text-decoration:line-through;text-decoration-thickness:2px}
+#card[data-theme="mono"] .bar .r{background:#555} #card[data-theme="mono"] .bar .w{background:#fff}
+
+/* 精品金 Luxe — 炭黑與香檳金，金融精品感 */
+#card[data-theme="luxe"]{
+  --ink:#14120E; --panel:#1F1C16; --line:#3A342A; --dim:#9C8F76; --paper:#F7F2E7;
+  --long:#8FCB9B; --short:#CF6B5C; --gold:#D9BC7A;
+  --chartbg:#0E0C09; --dot:#332D24; --note:#D9D0BC; --disc:#7A6E58;
+  --stampbg:rgba(20,18,14,.75)}
+
+/* ============ 版面骨架變體（非配色） ============ */
+
+/* Luxe：盤面置頂滿版，標題壓在圖下方，數據靠右對齊的雜誌開頁 */
+#card[data-theme="luxe"] .chart{order:-1;border-top:0;border-bottom:1px solid var(--line)}
+#card[data-theme="luxe"] .head{border-bottom:1px solid var(--line);border-top:0}
+#card[data-theme="luxe"] .head .id{padding:30px 34px 26px}
+#card[data-theme="luxe"] .pair{font-size:44px}
+#card[data-theme="luxe"] .head .now{min-width:300px;text-align:right;align-items:flex-end}
+#card[data-theme="luxe"] .grid{grid-template-columns:1fr 1fr}
+#card[data-theme="luxe"] .stamp{top:auto;bottom:24px;right:auto;left:26px;transform:none;
+  border-width:1px;border-radius:0;letter-spacing:.3em;font-size:18px;padding:10px 20px}
+
+/* Terminal：單欄堆疊，取消左右分割，數據像 log 一行一行往下 */
+#card[data-theme="terminal"] .head{flex-direction:column}
+#card[data-theme="terminal"] .head .id{padding:22px 30px 6px}
+#card[data-theme="terminal"] .head .now{border-left:0;border-top:1px solid var(--line);
+  min-width:0;padding:12px 30px;flex-direction:row;align-items:baseline;gap:14px}
+#card[data-theme="terminal"] .now .v{font-size:26px;margin:0}
+#card[data-theme="terminal"] .pair{font-size:40px}
+#card[data-theme="terminal"] .grid{grid-template-columns:1fr}
+#card[data-theme="terminal"] .levels{border-right:0;border-bottom:1px solid var(--line);padding:16px 30px}
+#card[data-theme="terminal"] .lv{padding:7px 0}
+#card[data-theme="terminal"] .lv .d{display:none}
+#card[data-theme="terminal"] .lv .n{width:110px}
+#card[data-theme="terminal"] .lv .n::before{content:"> ";color:var(--dim)}
+#card[data-theme="terminal"] .lv .p{font-size:22px;margin-left:auto}
+#card[data-theme="terminal"] .notes{flex-direction:row;gap:32px;padding:16px 30px}
+#card[data-theme="terminal"] .notes>div{flex:1}
+#card[data-theme="terminal"] .notes li{font-size:13px;line-height:1.65}
+#card[data-theme="terminal"] .stamp{border:0;background:rgba(0,0,0,.55);transform:none;
+  padding:6px 12px;font-size:20px;white-space:nowrap;
+  display:flex;align-items:center;gap:8px}
+#card[data-theme="terminal"] .stamp::before{content:"[";order:-1}
+#card[data-theme="terminal"] .stamp::after{content:"]";order:9}
+#card[data-theme="terminal"] .stamp small{margin:0;order:5;display:inline}
+
+/* Newsprint：置中報頭，上下雙分隔線，說明文字走雙欄排版 */
+#card[data-theme="news"] .head{flex-direction:column;text-align:center}
+#card[data-theme="news"] .head .id{padding:26px 30px 14px;border-bottom:3px double var(--line)}
+#card[data-theme="news"] .pair{font-size:62px;letter-spacing:-.02em}
+#card[data-theme="news"] .eyebrow,#card[data-theme="news"] .tf{letter-spacing:.5em}
+#card[data-theme="news"] .head .now{border-left:0;min-width:0;padding:12px 30px;
+  flex-direction:row;align-items:baseline;justify-content:center;gap:16px}
+#card[data-theme="news"] .now .v{font-size:28px;margin:0}
+#card[data-theme="news"] .grid{grid-template-columns:1fr;border-top:3px double var(--line)}
+#card[data-theme="news"] .levels{border-right:0;display:grid;grid-template-columns:repeat(3,1fr);
+  gap:0;padding:18px 30px;border-bottom:1px solid var(--line)}
+#card[data-theme="news"] .lv{flex-direction:column;align-items:center;gap:6px;padding:4px 8px;
+  border-right:1px solid var(--line)}
+#card[data-theme="news"] .lv:last-child{border-right:0}
+#card[data-theme="news"] .lv .d{display:none}
+#card[data-theme="news"] .lv .p{font-size:22px}
+#card[data-theme="news"] .notes{flex-direction:row;gap:30px;padding:18px 30px}
+#card[data-theme="news"] .notes>div{flex:1;border-left:1px solid var(--line);padding-left:16px}
+
+/* Clay：Bento 便當格，每一區塊獨立成圓角卡片並留間隙 */
+#card[data-theme="clay"]{padding:20px;gap:14px;background:var(--ink)}
+#card[data-theme="clay"] .chart{flex:1 1 auto;min-height:0}
+#card[data-theme="clay"] .head,
+#card[data-theme="clay"] .chart,
+#card[data-theme="clay"] .grid,
+#card[data-theme="clay"] .foot{border:0;border-radius:22px;background:var(--panel);
+  box-shadow:0 6px 18px rgba(70,40,110,.10);overflow:hidden}
+#card[data-theme="clay"] .chart{background:var(--chartbg)}
+#card[data-theme="clay"] .head .now{border-left:1px solid var(--line)}
+#card[data-theme="clay"] .levels{border-right:1px solid var(--line)}
+#card[data-theme="clay"] .disc{border-top:0;text-align:center;padding:4px 30px 2px}
+#card[data-theme="clay"] .lv .d{display:none}
+#card[data-theme="clay"] .lv .p{margin-left:auto}
+
+/* ===== 新增十套：各自有獨立版面骨架 ===== */
+
+/* 票根 Stub — 左側直排票根，主體右移 */
+#card[data-theme="stub"]{
+  --ink:#101418; --panel:#191F26; --line:#2E3742; --dim:#78848F; --paper:#ECF0F3;
+  --long:#2FBF71; --short:#EF4E4E; --gold:#E0B44C;
+  --chartbg:#0B0E12; --dot:#28303A; --note:#C3CCD4; --disc:#5A6672;
+  --stampbg:rgba(16,20,24,.75);
+  padding-left:88px}
+#card[data-theme="stub"]::after{content:"";position:absolute;left:0;top:0;bottom:0;width:88px;
+  background:var(--panel);border-right:2px dashed var(--line)}
+#card[data-theme="stub"] .head{position:relative;z-index:2}
+#card[data-theme="stub"] .eyebrow{position:absolute;left:-70px;top:390px;z-index:8;
+  writing-mode:vertical-rl;font-size:17px;letter-spacing:.34em;
+  width:52px;text-align:center}
+#card[data-theme="stub"] .stamp{left:-78px;right:auto;top:auto;bottom:40px;z-index:3;
+  writing-mode:vertical-rl;transform:none;border-width:2px;padding:16px 8px}
+#card[data-theme="stub"] .stamp small{writing-mode:horizontal-tb;margin:6px 0 0}
+
+/* 海報 Poster — 巨型幣種標題壓圖，數據縮成底部細帶 */
+#card[data-theme="poster"]{
+  --ink:#141210; --panel:#1E1B18; --line:#332E29; --dim:#8B8078; --paper:#FAF6F0;
+  --long:#6EE7A8; --short:#FF6B57; --gold:#F2C14E;
+  --chartbg:#0D0B09; --dot:#2C2722; --note:#D8CFC4; --disc:#6B625A;
+  --stampbg:transparent}
+#card[data-theme="poster"] .head{order:2;border-top:1px solid var(--line);border-bottom:0}
+#card[data-theme="poster"] .chart{order:1;flex:1 1 auto}
+#card[data-theme="poster"] .pair{font-size:88px;line-height:.92}
+#card[data-theme="poster"] .head .id{padding:20px 30px}
+#card[data-theme="poster"] .head .now{min-width:240px}
+#card[data-theme="poster"] .grid{order:3;grid-template-columns:1fr}
+#card[data-theme="poster"] .notes{display:none}
+#card[data-theme="poster"] .levels{border-right:0;display:grid;grid-template-columns:repeat(3,1fr);
+  padding:16px 30px}
+#card[data-theme="poster"] .lv{flex-direction:column;align-items:flex-start;gap:4px;padding:2px 0}
+#card[data-theme="poster"] .lv .d{display:none}
+#card[data-theme="poster"] .stamp{border:0;background:none;transform:none;
+  font-size:64px;opacity:.9;top:24px;left:30px;right:auto}
+
+#card[data-theme="receipt"]{
+  --ink:#FAFAF7; --panel:#FFFFFF; --line:#D9D6CE; --dim:#8A8578; --paper:#1A1A17;
+  --long:#1F7A4D; --short:#B3261E; --gold:#6E6A5E;
+  --chartbg:#F0EEE8; --dot:#DEDBD3; --note:#3A382F; --disc:#9E9A8E;
+  --stampbg:transparent}
+#card[data-theme="receipt"] .head{flex-direction:column;text-align:center;
+  border-bottom:2px dashed var(--line)}
+#card[data-theme="receipt"] .head .id{padding:24px 30px 8px}
+#card[data-theme="receipt"] .pair{font-family:"IBM Plex Mono",monospace;font-size:44px;font-weight:600}
+#card[data-theme="receipt"] .head .now{border-left:0;min-width:0;padding:8px 30px 18px;
+  flex-direction:row;justify-content:center;align-items:baseline;gap:14px}
+#card[data-theme="receipt"] .now .v{font-size:26px;margin:0}
+#card[data-theme="receipt"] .grid{grid-template-columns:1fr;border-bottom:2px dashed var(--line)}
+#card[data-theme="receipt"] .levels{border-right:0;padding:16px 90px;
+  border-bottom:2px dashed var(--line)}
+#card[data-theme="receipt"] .lv .p{font-size:21px}
+#card[data-theme="receipt"] .notes{flex-direction:row;gap:30px;padding:16px 60px;text-align:center}
+#card[data-theme="receipt"] .notes>div{flex:1}
+#card[data-theme="receipt"] .notes ul{padding:0;list-style:none}
+#card[data-theme="receipt"] .foot{justify-content:center;gap:40px}
+#card[data-theme="receipt"] .stamp{border-width:2px;border-radius:0;transform:rotate(-8deg);
+  opacity:.85}
+
+/* 雜誌 Editorial — 不對稱留白，左窄右寬 */
+#card[data-theme="editorial"]{
+  --ink:#F7F4EF; --panel:#FFFFFF; --line:#DDD6C9; --dim:#8C8371; --paper:#191714;
+  --long:#2F7D5C; --short:#C0392B; --gold:#191714;
+  --chartbg:#EDE8DE; --dot:#DDD6C9; --note:#3A352C; --disc:#A39A88;
+  --stampbg:transparent}
+#card[data-theme="editorial"] .head .id{padding:40px 30px 30px 70px}
+#card[data-theme="editorial"] .pair{font-size:58px;line-height:.95}
+#card[data-theme="editorial"] .eyebrow{font-size:11px;letter-spacing:.6em}
+#card[data-theme="editorial"] .grid{grid-template-columns:.8fr 1.4fr}
+#card[data-theme="editorial"] .levels{padding:26px 24px 26px 70px}
+#card[data-theme="editorial"] .lv{flex-direction:column;align-items:flex-start;gap:4px}
+#card[data-theme="editorial"] .lv .d{display:none}
+#card[data-theme="editorial"] .foot{padding-left:70px}
+#card[data-theme="editorial"] .disc{padding-left:70px}
+#card[data-theme="editorial"] .stamp{border:0;background:none;transform:none;
+  font-size:30px;letter-spacing:.3em}
+
+/* ================= 外殼型風格：邊框本身就是設計 ================= */
+
+/* 映像管 CRT — 圓角厚機殼、掃描線、四角螺絲、ON AIR 指示燈 */
+#card[data-theme="crt"]{
+  --ink:#1A1A18; --panel:#0D1410; --line:#2A3A30; --dim:#6E9A80; --paper:#D8FFE4;
+  --long:#5CFF9D; --short:#FF6B5C; --gold:#FFD166;
+  --chartbg:#050A07; --dot:#1E2E24; --note:#B4E6C4; --disc:#4E7A5E;
+  --stampbg:rgba(5,10,7,.8);
+  padding:44px 40px 66px;background:linear-gradient(180deg,#2B2B27 0%,#161614 100%);
+  border-radius:34px}
+#card[data-theme="crt"] .head{border-radius:18px 18px 0 0}
+#card[data-theme="crt"] .head,#card[data-theme="crt"] .chart,
+#card[data-theme="crt"] .grid,#card[data-theme="crt"] .foot,
+#card[data-theme="crt"] .disc{background:var(--panel)}
+#card[data-theme="crt"] .disc{border-radius:0 0 18px 18px}
+#card[data-theme="crt"]::before{content:"";position:absolute;left:40px;right:40px;top:44px;bottom:66px;
+  z-index:6;pointer-events:none;border-radius:18px;
+  background:repeating-linear-gradient(180deg,rgba(0,0,0,.30) 0 2px,transparent 2px 5px);
+  box-shadow:inset 0 0 70px rgba(0,0,0,.75)}
+#card[data-theme="crt"]::after{content:"● REC";position:absolute;left:0;right:0;bottom:22px;
+  z-index:7;text-align:center;color:#FF6B5C;font-family:"IBM Plex Mono",monospace;
+  font-size:15px;letter-spacing:.5em}
+#card[data-theme="crt"] .head::before{content:"";position:absolute;z-index:8;
+  left:-26px;top:-26px;width:11px;height:11px;border-radius:50%;background:#4A4A44;
+  box-shadow:1032px 0 0 #4A4A44;box-sizing:border-box}
+
+/* 霓虹 Neon — 磚牆暗底、發光燈管外框 */
+#card[data-theme="neon"]{
+  --ink:#0B0910; --panel:#130F1C; --line:#3A2A55; --dim:#9B86C4; --paper:#FDF4FF;
+  --long:#39FF88; --short:#FF3D6E; --gold:#00E5FF;
+  --chartbg:#080610; --dot:#2E2244; --note:#D5C4EC; --disc:#6E5A94;
+  --stampbg:rgba(11,9,16,.8);
+  padding:30px;background:#0B0910}
+#card[data-theme="neon"]::before{content:"";position:absolute;inset:14px;z-index:6;
+  pointer-events:none;border:3px solid #00E5FF;border-radius:16px;
+  box-shadow:0 0 12px #00E5FF,0 0 34px rgba(0,229,255,.55),
+             inset 0 0 12px #00E5FF,inset 0 0 30px rgba(0,229,255,.35)}
+#card[data-theme="neon"] .pair{text-shadow:0 0 10px rgba(255,255,255,.55),0 0 26px rgba(0,229,255,.5)}
+#card[data-theme="neon"] .stamp{box-shadow:0 0 10px currentColor,inset 0 0 10px rgba(255,255,255,.15);
+  border-radius:10px}
+
+/* 街機 Arcade — 像素階梯邊框、方塊陰影 */
+#card[data-theme="arcade"]{
+  --ink:#101828; --panel:#16203A; --line:#2E4270; --dim:#7E93C4; --paper:#F2F6FF;
+  --long:#4AE54A; --short:#FF4A4A; --gold:#FFD23F;
+  --chartbg:#0A1122; --dot:#24345C; --note:#C8D4F0; --disc:#5E739E;
+  --stampbg:#101828;
+  padding:34px;background:#0A0F1C}
+#card[data-theme="arcade"]::before{content:"";position:absolute;inset:12px;z-index:6;
+  pointer-events:none;
+  box-shadow:0 0 0 6px #FFD23F,0 0 0 12px #0A0F1C,0 0 0 18px #FF4A4A}
+#card[data-theme="arcade"] .pair{font-family:"IBM Plex Mono",monospace;font-weight:600;
+  font-size:44px;text-shadow:4px 4px 0 #FF4A4A}
+#card[data-theme="arcade"] .stamp{border-radius:0;border-width:4px;box-shadow:6px 6px 0 #FFD23F}
+
+/* 底片 Film — 上下齒孔片頭 */
+#card[data-theme="film"]{
+  --ink:#000000; --panel:#101010; --line:#2A2A2A; --dim:#8A8A8A; --paper:#F5F5F0;
+  --long:#7ED957; --short:#FF5E5E; --gold:#E8C547;
+  --chartbg:#080808; --dot:#242424; --note:#CFCFC9; --disc:#666663;
+  --stampbg:rgba(0,0,0,.78);
+  padding:52px 0}
+#card[data-theme="film"]::before,#card[data-theme="film"]::after{content:"";position:absolute;
+  left:0;right:0;height:52px;z-index:6;pointer-events:none;background:#1A1A18;
+  background-image:repeating-linear-gradient(90deg,transparent 0 18px,#000 18px 44px,transparent 44px 62px);
+  background-size:62px 100%;background-position:center}
+#card[data-theme="film"]::before{top:0} #card[data-theme="film"]::after{bottom:0}
+#card[data-theme="film"] .head .id,#card[data-theme="film"] .levels,
+#card[data-theme="film"] .notes,#card[data-theme="film"] .foot,
+#card[data-theme="film"] .disc{padding-left:34px;padding-right:34px}
+
+/* 拍立得 Polaroid — 白框寬底邊，手寫落款 */
+#card[data-theme="polaroid"]{
+  --ink:#FFFFFF; --panel:#FFFFFF; --line:#E0DDD6; --dim:#8E8A80; --paper:#1A1815;
+  --long:#2E8B57; --short:#C7453B; --gold:#8E8A80;
+  --chartbg:#EFECE5; --dot:#E0DDD6; --note:#3C3831; --disc:#A8A399;
+  --stampbg:rgba(255,255,255,.88);
+  padding:26px 26px 96px;background:#FBFAF7;
+  box-shadow:inset 0 0 0 1px #E8E5DE}
+#card[data-theme="polaroid"] .disc{position:absolute;left:0;right:0;bottom:32px;
+  text-align:center;border-top:0;font-family:"Noto Sans TC";font-size:14px;letter-spacing:.05em}
+#card[data-theme="polaroid"] .foot{border-top:1px solid var(--line)}
+#card[data-theme="polaroid"] .stamp{transform:rotate(-7deg);border-radius:2px}
+
+/* 登機證 Boarding — 兩側凹槽、底部條碼 */
+#card[data-theme="boarding"]{
+  --ink:#F7F9FB; --panel:#FFFFFF; --line:#D3DAE2; --dim:#78848F; --paper:#12181E;
+  --long:#0E7C5A; --short:#C93B3B; --gold:#1E5C9E;
+  --chartbg:#E8EDF2; --dot:#DCE2E9; --note:#39424C; --disc:#98A2AC;
+  --stampbg:rgba(247,249,251,.9);
+  padding-bottom:74px;border-radius:14px}
+#card[data-theme="boarding"]::before{content:"";position:absolute;z-index:6;pointer-events:none;
+  left:-26px;right:-26px;top:60%;height:52px;
+  background:radial-gradient(circle 26px at 0 50%,#07090B 26px,transparent 27px),
+             radial-gradient(circle 26px at 100% 50%,#07090B 26px,transparent 27px)}
+#card[data-theme="boarding"]::after{content:"";position:absolute;left:30px;right:30px;bottom:24px;
+  height:34px;z-index:6;
+  background:repeating-linear-gradient(90deg,#12181E 0 2px,transparent 2px 4px,
+             #12181E 4px 7px,transparent 7px 11px,#12181E 11px 12px,transparent 12px 16px)}
+
+/* 黑膠 Vinyl — 唱片探出封套右緣 */
+#card[data-theme="vinyl"]{
+  --ink:#151310; --panel:#1F1B16; --line:#38312A; --dim:#948877; --paper:#F4EFE6;
+  --long:#8FCF77; --short:#DF6B54; --gold:#E0A33E;
+  --chartbg:#0E0C0A; --dot:#2C2620; --note:#D8CFC0; --disc:#6E645A;
+  --stampbg:rgba(21,19,16,.8);
+  padding:26px}
+#card[data-theme="vinyl"]::before{content:"";position:absolute;z-index:0;pointer-events:none;
+  right:-150px;top:50%;transform:translateY(-50%);width:420px;height:420px;border-radius:50%;
+  background:repeating-radial-gradient(circle,#0A0908 0 3px,#131110 3px 6px);
+  box-shadow:0 0 0 1px #2A2520}
+#card[data-theme="vinyl"]::after{content:"";position:absolute;z-index:0;pointer-events:none;
+  right:-10px;top:50%;transform:translateY(-50%);width:140px;height:140px;border-radius:50%;
+  background:var(--gold);box-shadow:inset 0 0 0 44px #0A0908}
+#card[data-theme="vinyl"] .head,#card[data-theme="vinyl"] .chart,
+#card[data-theme="vinyl"] .grid,#card[data-theme="vinyl"] .foot,
+#card[data-theme="vinyl"] .disc{position:relative;z-index:2;background:var(--ink)}
+
+/* 復古視窗 Window — 標題列、立體斜角邊 */
+#card[data-theme="window"]{
+  --ink:#C6C6C6; --panel:#DEDEDE; --line:#8A8A8A; --dim:#4A4A4A; --paper:#0A0A0A;
+  --long:#006A3C; --short:#B01818; --gold:#000080;
+  --chartbg:#000000; --dot:#B0B0B0; --note:#1E1E1E; --disc:#5A5A5A;
+  --stampbg:rgba(222,222,222,.9);
+  padding:38px 6px 6px;background:#C6C6C6;
+  box-shadow:inset 2px 2px 0 #FFF,inset -2px -2px 0 #6A6A6A,
+             inset 4px 4px 0 #DEDEDE,inset -4px -4px 0 #9A9A9A}
+#card[data-theme="window"]::before{content:var(--brandbar,"盤面分析");position:absolute;
+  left:6px;right:6px;top:6px;height:28px;z-index:6;
+  background:linear-gradient(90deg,#000080,#1084D0);color:#FFF;
+  font-size:14px;font-weight:700;line-height:28px;padding-left:10px;letter-spacing:.05em}
+#card[data-theme="window"]::after{content:"";position:absolute;top:11px;right:12px;z-index:7;
+  width:18px;height:18px;background:#C6C6C6;
+  box-shadow:-22px 0 0 #C6C6C6,-44px 0 0 #C6C6C6,
+             inset 1px 1px 0 #FFF,inset -1px -1px 0 #6A6A6A}
+#card[data-theme="window"] .head,#card[data-theme="window"] .chart,
+#card[data-theme="window"] .grid,#card[data-theme="window"] .foot,
+#card[data-theme="window"] .disc{background:var(--panel)}
+#card[data-theme="window"] .chart{background:var(--chartbg)}
+
+/* 記分板 Scoreboard — LED 點陣、琥珀光 */
+#card[data-theme="score"]{
+  --ink:#0A0A08; --panel:#121008; --line:#3A2E10; --dim:#9A7A28; --paper:#FFC93C;
+  --long:#7CFF5C; --short:#FF5C3C; --gold:#FFC93C;
+  --chartbg:#060604; --dot:#2E2410; --note:#E8B830; --disc:#6E5618;
+  --stampbg:rgba(10,10,8,.8);
+  padding:22px;background:#050504;border-radius:6px;
+  box-shadow:inset 0 0 0 10px #1A1A16,inset 0 0 0 13px #3A3A32}
+#card[data-theme="score"]::before{content:"";position:absolute;inset:22px;z-index:6;
+  pointer-events:none;
+  background:radial-gradient(circle 1.1px,rgba(0,0,0,.55) 1.1px,transparent 1.2px);
+  background-size:4px 4px}
+#card[data-theme="score"] .pair,#card[data-theme="score"] .now .v,
+#card[data-theme="score"] .lv .p,#card[data-theme="score"] .rrval{
+  font-family:"IBM Plex Mono",monospace;font-weight:600;
+  text-shadow:0 0 10px currentColor}
+
+/* 護照 Passport — 雙線壓紋外框、底部機讀碼 */
+#card[data-theme="passport"]{
+  --ink:#0E2E28; --panel:#123A32; --line:#2E5C50; --dim:#7FB0A2; --paper:#EFF7F3;
+  --long:#5FD6A0; --short:#E8705F; --gold:#C9A85C;
+  --chartbg:#0A241F; --dot:#245047; --note:#C4E0D6; --disc:#5E8C7E;
+  --stampbg:rgba(14,46,40,.75);
+  padding:24px 24px 78px}
+#card[data-theme="passport"]::before{content:"";position:absolute;inset:10px;z-index:6;
+  pointer-events:none;border:2px solid var(--gold);
+  box-shadow:inset 0 0 0 4px transparent,inset 0 0 0 6px var(--gold)}
+#card[data-theme="passport"]::after{content:var(--mrz,"P<SIGNAL<<CARD<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+  position:absolute;left:24px;right:24px;bottom:22px;z-index:7;
+  font-family:"IBM Plex Mono",monospace;font-size:19px;letter-spacing:.14em;
+  color:var(--paper);opacity:.85;white-space:nowrap;overflow:hidden}
+#card[data-theme="passport"] .stamp{transform:rotate(-11deg);border-width:3px;border-radius:4px;
+  opacity:.9}
+
+/* 方向色：由 data-dir 明確決定，勝過任何主題順序問題 */
+#card[data-dir="LONG"]{--dir:var(--long)}
+#card[data-dir="SHORT"]{--dir:var(--short)}
+#card[data-dir="NONE"]{--dir:var(--long)}
+
+
+/* ============ 舊風格外殼優化 ============ */
+
+/* 墨夜：內嵌金色髮絲框 + 四角刻痕 + 側邊流水號帶 */
+#card[data-theme="ink"]{padding:18px}
+#card[data-theme="ink"]::before{content:"";position:absolute;inset:8px;z-index:6;
+  pointer-events:none;border:1px solid rgba(216,162,74,.42)}
+#card[data-theme="ink"]::after{content:"";position:absolute;inset:8px;z-index:7;
+  pointer-events:none;
+  background:linear-gradient(90deg,var(--gold) 0 34px,transparent 34px) left top/100% 1px no-repeat,
+             linear-gradient(90deg,var(--gold) 0 34px,transparent 34px) left bottom/100% 1px no-repeat,
+             linear-gradient(270deg,var(--gold) 0 34px,transparent 34px) right top/100% 1px no-repeat,
+             linear-gradient(270deg,var(--gold) 0 34px,transparent 34px) right bottom/100% 1px no-repeat}
+
+/* 日光：頂部色帶 + 雙線壓紋 */
+#card[data-theme="paper"]{padding:16px;background:#EAE5DA}
+#card[data-theme="paper"] .head{border-top:6px solid var(--gold)}
+#card[data-theme="paper"]::before{content:"";position:absolute;inset:7px;z-index:6;
+  pointer-events:none;border:1px solid rgba(0,0,0,.20);
+  box-shadow:inset 0 0 0 4px #EAE5DA,inset 0 0 0 5px rgba(0,0,0,.12)}
+#card[data-theme="paper"] .head,#card[data-theme="paper"] .chart,
+#card[data-theme="paper"] .grid,#card[data-theme="paper"] .foot,
+#card[data-theme="paper"] .disc{background:var(--ink)}
+
+/* 純黑白：外圍粗白框 + 四角裁切標記 */
+#card[data-theme="mono"]{padding:26px;background:#000}
+#card[data-theme="mono"]::before{content:"";position:absolute;inset:14px;z-index:6;
+  pointer-events:none;border:2px solid #fff}
+#card[data-theme="mono"]::after{content:"";position:absolute;inset:0;z-index:7;pointer-events:none;
+  background:linear-gradient(#fff,#fff) 0 0/1px 30px no-repeat,
+             linear-gradient(#fff,#fff) 0 0/30px 1px no-repeat,
+             linear-gradient(#fff,#fff) 100% 0/1px 30px no-repeat,
+             linear-gradient(#fff,#fff) 100% 0/30px 1px no-repeat,
+             linear-gradient(#fff,#fff) 0 100%/1px 30px no-repeat,
+             linear-gradient(#fff,#fff) 0 100%/30px 1px no-repeat,
+             linear-gradient(#fff,#fff) 100% 100%/1px 30px no-repeat,
+             linear-gradient(#fff,#fff) 100% 100%/30px 1px no-repeat}
+
+/* 粗獷：整張外推硬陰影 + 右上角貼紙 */
+#card[data-theme="brutal"]{padding:16px}
+#card[data-theme="brutal"]::before{content:"";position:absolute;inset:8px;z-index:6;
+  pointer-events:none;border:4px solid #000;box-shadow:12px 12px 0 rgba(0,0,0,.9)}
+
+/* 黏土：柔和暈染背景襯底 */
+#card[data-theme="clay"]{
+  background:radial-gradient(circle at 18% 12%,#F7E6FF 0%,transparent 46%),
+             radial-gradient(circle at 84% 86%,#DFF3FF 0%,transparent 44%),#EFE7F7}
+
+/* 終端機：視窗列 + 閃爍游標 */
+#card[data-theme="terminal"]{padding:36px 0 0}
+#card[data-theme="terminal"]::before{content:var(--termbar,"user@signal:~/card$");position:absolute;
+  left:0;right:0;top:0;height:36px;z-index:6;background:#0A0F0A;
+  border-bottom:1px solid var(--line);color:var(--dim);
+  font-family:"IBM Plex Mono",monospace;font-size:14px;line-height:36px;padding-left:14px}
+#card[data-theme="terminal"]::after{content:"";position:absolute;right:14px;top:13px;z-index:7;
+  width:10px;height:10px;border-radius:50%;background:#39FF6A;
+  box-shadow:-18px 0 0 #FFD23F,-36px 0 0 #FF4040}
+
+/* 報紙：報頭刊次帶 + 邊緣毛邊 */
+#card[data-theme="news"]{padding:0 14px 14px;background:#E6DFCC}
+#card[data-theme="news"] .head{border-top:0}
+#card[data-theme="news"]::before{content:"VOL. 01　·　交易日報　·　TRADING DAILY";
+  position:absolute;left:0;right:0;top:0;height:30px;z-index:6;
+  background:#12100C;color:#F0EAD9;text-align:center;line-height:30px;
+  font-size:12px;letter-spacing:.34em}
+#card[data-theme="news"] .head .id{padding-top:44px}
+#card[data-theme="news"] .head,#card[data-theme="news"] .chart,
+#card[data-theme="news"] .grid,#card[data-theme="news"] .foot,
+#card[data-theme="news"] .disc{background:var(--ink)}
+
+/* 精品金：雙層金箔框 + 四角飾紋 */
+#card[data-theme="luxe"]{padding:22px}
+#card[data-theme="luxe"]::before{content:"";position:absolute;inset:10px;z-index:6;
+  pointer-events:none;border:1px solid rgba(217,188,122,.75);
+  box-shadow:inset 0 0 0 5px transparent,inset 0 0 0 6px rgba(217,188,122,.35)}
+#card[data-theme="luxe"]::after{content:"◆";position:absolute;left:0;right:0;top:16px;z-index:7;
+  text-align:center;color:var(--gold);font-size:13px;
+  text-shadow:0 1026px 0 var(--gold)}
+
+/* 票根：票根加條碼 + 撕線圓孔 */
+#card[data-theme="stub"]::before{content:"";position:absolute;left:22px;top:56px;
+  width:44px;height:250px;z-index:7;
+  background:repeating-linear-gradient(180deg,var(--paper) 0 3px,transparent 3px 7px,
+             var(--paper) 7px 11px,transparent 11px 16px)}
+
+/* 海報：畫廊白邊 + 底部說明帶 */
+#card[data-theme="poster"]{padding:20px 20px 62px;background:#EDE9E1}
+#card[data-theme="poster"] .head,#card[data-theme="poster"] .chart,
+#card[data-theme="poster"] .grid,#card[data-theme="poster"] .foot{background:var(--ink)}
+#card[data-theme="poster"] .disc{position:absolute;left:0;right:0;bottom:20px;
+  text-align:center;border-top:0;color:#6B625A;letter-spacing:.24em}
+
+/* 收據：上下鋸齒撕邊 */
+#card[data-theme="receipt"]{padding:22px 0;background:#DEDBD3}
+#card[data-theme="receipt"] .head,#card[data-theme="receipt"] .chart,
+#card[data-theme="receipt"] .grid,#card[data-theme="receipt"] .foot,
+#card[data-theme="receipt"] .disc{background:var(--ink)}
+#card[data-theme="receipt"]::before,#card[data-theme="receipt"]::after{content:"";
+  position:absolute;left:0;right:0;height:22px;z-index:6;background:#DEDBD3;
+  background-image:linear-gradient(45deg,#FAFAF7 25%,transparent 25%),
+                   linear-gradient(-45deg,#FAFAF7 25%,transparent 25%);
+  background-size:22px 22px}
+#card[data-theme="receipt"]::before{top:0;transform:rotate(180deg)}
+#card[data-theme="receipt"]::after{bottom:0}
+
+/* 雜誌：頁碼折線 + 天地留白 */
+#card[data-theme="editorial"]{padding:14px 0 44px}
+#card[data-theme="editorial"]::before{content:"";position:absolute;left:70px;right:30px;top:14px;
+  height:1px;z-index:6;background:var(--paper)}
+#card[data-theme="editorial"]::after{content:"— 01 —";position:absolute;left:0;right:0;bottom:16px;
+  z-index:6;text-align:center;color:var(--dim);font-size:13px;letter-spacing:.4em}
+
+/* ================= 再十套外殼 ================= */
+
+/* 卡帶 Cassette — 磁帶盒、雙轉盤、標籤貼紙 */
+#card[data-theme="cassette"]{
+  --ink:#1C1A1F; --panel:#26232B; --line:#3E3946; --dim:#928AA0; --paper:#F3EFF8;
+  --long:#5FE0A0; --short:#FF6B84; --gold:#E8B04B;
+  --chartbg:#141218; --dot:#332E3A; --note:#D2CADC; --disc:#6B647A;
+  --stampbg:rgba(28,26,31,.8);
+  padding:30px 26px 96px;background:linear-gradient(180deg,#312C38,#1A171E);
+  border-radius:10px;box-shadow:inset 0 0 0 3px #46404F}
+#card[data-theme="cassette"]::before{content:"";position:absolute;left:0;right:0;bottom:22px;
+  height:58px;z-index:6;pointer-events:none;
+  background:radial-gradient(circle 27px at 34% 50%,#0C0A0E 27px,transparent 28px),
+             radial-gradient(circle 27px at 66% 50%,#0C0A0E 27px,transparent 28px),
+             radial-gradient(circle 9px at 34% 50%,#8A8296 9px,transparent 10px),
+             radial-gradient(circle 9px at 66% 50%,#8A8296 9px,transparent 10px)}
+#card[data-theme="cassette"] .disc{position:absolute;left:0;right:0;bottom:2px;
+  text-align:center;border-top:0}
+
+/* 跑馬燈 Ticker — 上下 LED 燈帶夾住畫面 */
+#card[data-theme="ticker"]{
+  --ink:#08090B; --panel:#111318; --line:#242830; --dim:#78808C; --paper:#F0F3F7;
+  --long:#00E676; --short:#FF3B30; --gold:#FFB300;
+  --chartbg:#050609; --dot:#20242C; --note:#C2C9D2; --disc:#5A6068;
+  --stampbg:rgba(8,9,11,.8);
+  padding:46px 0}
+#card[data-theme="ticker"]::before,#card[data-theme="ticker"]::after{content:"";
+  position:absolute;left:0;right:0;height:46px;z-index:6;background:#0A0B0E;
+  background-image:radial-gradient(circle 1.6px,rgba(255,179,0,.85) 1.6px,transparent 1.7px);
+  background-size:7px 7px;border-top:1px solid #242830;border-bottom:1px solid #242830}
+#card[data-theme="ticker"]::before{top:0} #card[data-theme="ticker"]::after{bottom:0}
+
+/* 機密檔案 Dossier — 牛皮紙袋、紅色機密戳、迴紋針 */
+#card[data-theme="dossier"]{
+  --ink:#E8DCC0; --panel:#F2E9D4; --line:#B8A47C; --dim:#7A6B4C; --paper:#241E12;
+  --long:#2F6B45; --short:#A32B22; --gold:#7A6B4C;
+  --chartbg:#DED0AE; --dot:#C9B893; --note:#3A3222; --disc:#8F8266;
+  --stampbg:transparent;
+  padding:34px 22px 22px;background:#DACdb0}
+#card[data-theme="dossier"]::before{content:"CONFIDENTIAL · 內部資料";position:absolute;
+  left:0;right:0;top:0;height:34px;z-index:6;background:#A32B22;color:#F7EFE0;
+  text-align:center;line-height:34px;font-size:13px;letter-spacing:.42em}
+#card[data-theme="dossier"]::after{content:"";position:absolute;right:56px;top:22px;z-index:8;
+  width:26px;height:60px;border:4px solid #8A8F96;border-radius:14px;
+  border-bottom-color:transparent}
+#card[data-theme="dossier"] .stamp{border-width:4px;border-radius:6px;
+  transform:rotate(-14deg);opacity:.85;background:none}
+
+/* 掌機 Handheld — 灰機殼、綠螢幕、圓形按鍵 */
+#card[data-theme="handheld"]{
+  --ink:#8FA86B; --panel:#9CB877; --line:#3E4A2A; --dim:#4A5834; --paper:#1B2410;
+  --long:#1B2410; --short:#5A2418; --gold:#3E4A2A;
+  --chartbg:#A8C285; --dot:#7E9459; --note:#26301A; --disc:#55643C;
+  --stampbg:rgba(143,168,107,.85);
+  padding:38px 40px 130px;background:#CFCBC0;border-radius:14px 14px 46px 14px;
+  box-shadow:inset 0 0 0 3px #B5B1A6}
+#card[data-theme="handheld"]::before{content:"";position:absolute;left:40px;right:40px;top:38px;
+  bottom:130px;z-index:6;pointer-events:none;border:12px solid #7E7A70;border-radius:8px}
+#card[data-theme="handheld"]::after{content:"";position:absolute;bottom:22px;left:40px;right:40px;
+  height:96px;z-index:7;
+  background:
+    linear-gradient(#3E3B35,#3E3B35) 34px 50%/96px 30px no-repeat,
+    linear-gradient(#3E3B35,#3E3B35) 67px 50%/30px 96px no-repeat,
+    radial-gradient(circle 25px at calc(100% - 26px) 34px,#9A3B4A 25px,transparent 26px),
+    radial-gradient(circle 25px at calc(100% - 92px) 62px,#9A3B4A 25px,transparent 26px),
+    linear-gradient(#6E6A62,#6E6A62) 50% 66px/74px 15px no-repeat,
+    linear-gradient(#6E6A62,#6E6A62) calc(50% - 92px) 66px/74px 15px no-repeat}
+
+/* 站牌 Subway — 圓角色塊、粗體站名、路線圓標 */
+#card[data-theme="subway"]{
+  --ink:#101418; --panel:#FFFFFF; --line:#C9CFD6; --dim:#5A636D; --paper:#0E1216;
+  --long:#009B48; --short:#E02020; --gold:#0057B8;
+  --chartbg:#EEF1F4; --dot:#D6DBE1; --note:#2A3138; --disc:#8A939C;
+  --stampbg:#FFFFFF;
+  padding:24px;background:#101418;border-radius:26px}
+#card[data-theme="subway"] .head,#card[data-theme="subway"] .chart,
+#card[data-theme="subway"] .grid,#card[data-theme="subway"] .foot,
+#card[data-theme="subway"] .disc{background:#FFFFFF}
+#card[data-theme="subway"] .head{border-radius:16px 16px 0 0;border-bottom:4px solid var(--gold)}
+#card[data-theme="subway"] .disc{border-radius:0 0 16px 16px;text-align:center}
+#card[data-theme="subway"] .pair{font-size:52px}
+#card[data-theme="subway"] .stamp{border-radius:999px;border-width:5px;transform:none;
+  width:120px;height:120px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;font-size:24px;padding:0}
+
+/* 全息卡 Holo — 彩虹箔漸層外框、卡角圓潤 */
+#card[data-theme="holo"]{
+  --ink:#0B0D18; --panel:#141830; --line:#2E3560; --dim:#8E97C4; --paper:#F4F6FF;
+  --long:#5EEAD4; --short:#FF7AA2; --gold:#B39DFF;
+  --chartbg:#080A14; --dot:#262C50; --note:#C6CDEA; --disc:#666E9A;
+  --stampbg:rgba(11,13,24,.8);
+  padding:18px;border-radius:22px;
+  background:linear-gradient(125deg,#FF8AC4,#FFD36E,#7DF9C0,#79C6FF,#C89BFF,#FF8AC4)}
+#card[data-theme="holo"] .head,#card[data-theme="holo"] .chart,
+#card[data-theme="holo"] .grid,#card[data-theme="holo"] .foot,
+#card[data-theme="holo"] .disc{background:var(--ink)}
+#card[data-theme="holo"] .head{border-radius:14px 14px 0 0}
+#card[data-theme="holo"] .disc{border-radius:0 0 14px 14px}
+#card[data-theme="holo"] .stamp{border-radius:10px;
+  box-shadow:0 0 0 2px rgba(255,255,255,.2),0 0 18px rgba(179,157,255,.6)}
+
+/* 航空信 Airmail — 紅藍斜紋信封邊、郵戳 */
+#card[data-theme="airmail"]{
+  --ink:#FDFCF8; --panel:#FFFFFF; --line:#D8D3C6; --dim:#7E7869; --paper:#14120C;
+  --long:#1C6B45; --short:#C0392B; --gold:#1E4C8A;
+  --chartbg:#F0EDE4; --dot:#E2DDD1; --note:#33302A; --disc:#A39D8E;
+  --stampbg:rgba(253,252,248,.9);
+  padding:22px}
+#card[data-theme="airmail"]::before{content:"";position:absolute;inset:0;z-index:6;
+  pointer-events:none;
+  background:repeating-linear-gradient(45deg,#C0392B 0 14px,#FDFCF8 14px 28px,
+             #1E4C8A 28px 42px,#FDFCF8 42px 56px) 0 0/100% 22px no-repeat,
+     repeating-linear-gradient(45deg,#C0392B 0 14px,#FDFCF8 14px 28px,
+             #1E4C8A 28px 42px,#FDFCF8 42px 56px) 0 100%/100% 22px no-repeat,
+     repeating-linear-gradient(135deg,#C0392B 0 14px,#FDFCF8 14px 28px,
+             #1E4C8A 28px 42px,#FDFCF8 42px 56px) 0 0/22px 100% no-repeat,
+     repeating-linear-gradient(135deg,#C0392B 0 14px,#FDFCF8 14px 28px,
+             #1E4C8A 28px 42px,#FDFCF8 42px 56px) 100% 0/22px 100% no-repeat}
+#card[data-theme="airmail"]::after{content:"AIR MAIL · PAR AVION";position:absolute;
+  right:34px;top:34px;z-index:7;border:2px solid #1E4C8A;color:#1E4C8A;
+  padding:6px 12px;font-size:12px;letter-spacing:.3em;transform:rotate(-4deg)}
+
+/* X 光片 Xray — 深藍透光片、燈箱邊夾 */
+#card[data-theme="xray"]{
+  --ink:#050B14; --panel:#0A1420; --line:#1E3448; --dim:#6E8CA8; --paper:#DCEAF6;
+  --long:#7DF9E0; --short:#FF8A9C; --gold:#9EC4E0;
+  --chartbg:#020610; --dot:#18293A; --note:#B4CCE0; --disc:#4E6880;
+  --stampbg:rgba(5,11,20,.8);
+  padding:34px 26px 26px;background:#02060C;
+  box-shadow:inset 0 0 120px rgba(120,180,230,.16)}
+#card[data-theme="xray"]::before{content:"";position:absolute;left:0;right:0;top:0;height:34px;
+  z-index:7;background:linear-gradient(180deg,#2A3A48,#16222E);
+  border-bottom:1px solid #3E5468}
+#card[data-theme="xray"]::after{content:"";position:absolute;top:8px;z-index:8;
+  left:200px;width:70px;height:18px;background:#5A6E80;border-radius:3px;
+  box-shadow:610px 0 0 #5A6E80}
+#card[data-theme="xray"] .chart{box-shadow:inset 0 0 90px rgba(150,200,240,.14)}
+
+/* 粗獷 Neo-Brutalism — 酸黃底、純黑硬邊、位移陰影 */
+#card[data-theme="brutal"]{
+  --ink:#F5E93F; --panel:#FFFFFF; --line:#000000; --dim:#000000; --paper:#000000;
+  --long:#008F5D; --short:#E01B24; --gold:#000000;
+  --grid:rgba(0,0,0,.045); --chartbg:#FFFFFF; --dash:#000000; --dot:#000000;
+  --note:#000000; --disc:#000000; --stampbg:#FFFFFF;
+}
+#card[data-theme="brutal"]{border:5px solid #000}
+#card[data-theme="brutal"] .head,
+#card[data-theme="brutal"] .chart,
+#card[data-theme="brutal"] .grid{border-bottom-width:4px}
+#card[data-theme="brutal"] .head .now,
+#card[data-theme="brutal"] .levels{border-left-width:4px;border-right-width:4px}
+#card[data-theme="brutal"] .lv .d{border-bottom:0}
+#card[data-theme="brutal"] .stamp{border-width:4px;border-radius:0;box-shadow:7px 7px 0 #000;
+  color:#000;background:#fff}
+#card[data-theme="brutal"] .stamp small{color:#000}
+#card[data-theme="brutal"] .bar{border-width:3px}
+#card[data-theme="brutal"] .disc{border-top-width:4px}
+#card[data-theme="brutal"] .lv.tp .p,#card[data-theme="brutal"] .lv.sl .p{-webkit-text-stroke:1px #000}
+
+*{box-sizing:border-box}
+body{margin:0;background:#07090B;color:var(--paper);
+  font-family:"Noto Sans TC",system-ui,sans-serif;}
+.nav{display:flex;align-items:center;gap:8px;padding:14px 28px;border-bottom:1px solid var(--line);
+  background:var(--panel);position:sticky;top:0;z-index:50;flex-wrap:wrap}
+.navlabel{font-size:11px;letter-spacing:.24em;color:var(--dim);margin-right:8px}
+.nav button{padding:8px 16px;border-radius:999px;border:1px solid var(--line);background:#0B0E12;
+  color:var(--dim);font-family:inherit;font-size:12px;font-weight:700;letter-spacing:.08em;cursor:pointer}
+.nav button.on{border-color:var(--gold);color:var(--gold);background:rgba(216,162,74,.10)}
+.wrap{display:grid;grid-template-columns:400px 1fr;gap:28px;padding:28px;align-items:start}
+@media(max-width:980px){.wrap{grid-template-columns:1fr}}
+
+/* ---------- 控制面板 ---------- */
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;position:sticky;top:80px}
+.panel h1{font-size:15px;letter-spacing:.18em;margin:0 0 4px;font-weight:900}
+.panel p.sub{color:var(--dim);font-size:12px;margin:0 0 18px;line-height:1.6}
+label{display:block;font-size:11px;letter-spacing:.14em;color:var(--dim);margin:14px 0 6px}
+input,textarea,select{width:100%;background:#0B0E12;border:1px solid var(--line);color:var(--paper);
+  border-radius:8px;padding:9px 11px;font-size:13px;font-family:"IBM Plex Mono","Noto Sans TC",monospace}
+textarea{resize:vertical;min-height:64px;line-height:1.7}
+input:focus,textarea:focus,select:focus{outline:2px solid var(--gold);outline-offset:1px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+.seg button{padding:10px;border-radius:8px;border:1px solid var(--line);background:#0B0E12;
+  color:var(--dim);font-weight:700;font-size:13px;cursor:pointer;letter-spacing:.08em}
+.seg button.on[data-v=LONG]{border-color:var(--long);color:var(--long);background:rgba(34,197,139,.10)}
+.seg button.on[data-v=SHORT]{border-color:var(--short);color:var(--short);background:rgba(255,92,92,.10)}
+.seg button.on[data-v=NONE]{border-color:var(--gold);color:var(--gold);background:rgba(216,162,74,.10)}
+.drop{margin-top:6px;border:1px dashed var(--line);border-radius:10px;padding:22px 12px;text-align:center;
+  color:var(--dim);font-size:12px;cursor:pointer;line-height:1.7}
+.drop.hot{border-color:var(--gold);color:var(--gold)}
+.actions{display:flex;gap:10px;margin-top:22px}
+.actions button{flex:1;padding:12px;border-radius:9px;border:none;cursor:pointer;font-weight:700;font-size:13px;
+  font-family:inherit;letter-spacing:.06em}
+#save{background:var(--gold);color:#17120A}
+#copy{background:#0B0E12;color:var(--paper);border:1px solid var(--line)}
+.hint{color:var(--dim);font-size:11px;margin-top:10px;line-height:1.7}
+
+/* ---------- 卡片本體（匯出 1080px） ---------- */
+.stage{display:flex;justify-content:center;overflow:hidden}
+#scaler{transform-origin:top center;width:1082px;flex:0 0 auto}
+#card{width:1080px;height:1080px;display:flex;flex-direction:column;transform-origin:top center;
+  background:var(--ink);color:var(--paper);border:1px solid var(--line);position:relative;overflow:hidden}
+/* 票券背景細節：極淡刻度線 */
+
+.head{display:flex;align-items:stretch;border-bottom:1px solid var(--line);position:relative;z-index:1;flex:0 0 auto}
+.head .id{padding:26px 30px;flex:1}
+.eyebrow{font-family:"IBM Plex Mono",monospace;font-size:13px;letter-spacing:.4em;color:var(--gold)}
+.pair{font-family:"Archivo Black","Noto Sans TC",sans-serif;font-size:52px;line-height:1.05;margin-top:8px;letter-spacing:-.01em}
+.tf{font-family:"IBM Plex Mono",monospace;font-size:14px;color:var(--dim);letter-spacing:.22em;margin-top:8px}
+.head .now{padding:26px 30px;border-left:1px solid var(--line);min-width:270px;display:flex;flex-direction:column;justify-content:center}
+.k{font-size:12px;letter-spacing:.22em;color:var(--gold);font-weight:700}
+.now .v{font-family:"IBM Plex Mono",monospace;font-size:38px;font-weight:600;margin-top:6px}
+.chg{font-family:"IBM Plex Mono",monospace;font-size:15px;color:var(--dim);margin-top:4px}
+.chg.up{color:var(--long)} .chg.dn{color:var(--short)}
+
+.chart{position:relative;z-index:1;margin:0;background:var(--chartbg);border-bottom:1px solid var(--line);
+  flex:1 1 auto;min-height:0;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#333C48;font-size:14px;letter-spacing:.2em}
+.chart img{position:absolute;left:50%;top:50%;width:auto;height:auto;
+  max-width:none;max-height:none;object-fit:none;display:block;
+  transform-origin:center center;cursor:grab;user-select:none;-webkit-user-drag:none;
+  image-rendering:auto}
+.chart img.dragging{cursor:grabbing}
+/* 方向章：撕票根上的印記 */
+.stamp{position:absolute;z-index:3;right:26px;top:26px;border:2px solid var(--dir);color:var(--dir);
+  padding:8px 18px 9px;font-family:"Archivo Black",sans-serif;font-size:24px;letter-spacing:.14em;
+  transform:rotate(-4deg);background:var(--stampbg);border-radius:3px}
+.stamp small{display:block;font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.3em;
+  color:currentColor;opacity:.72;margin-top:3px;text-align:center}
+
+/* 數據列：等寬字，左標右值，中間點線 */
+.grid{position:relative;z-index:1;flex:0 0 auto;display:grid;grid-template-columns:1.15fr 1fr;border-bottom:1px solid var(--line)}
+.levels{padding:24px 30px;border-right:1px solid var(--line)}
+.lv{display:flex;align-items:baseline;gap:12px;padding:13px 0}
+.lv:last-child{border-bottom:0}
+.lv .n{font-size:14px;letter-spacing:.16em;color:var(--gold);font-weight:700;white-space:nowrap}
+.lv .d{flex:1;border-bottom:1px dotted var(--dot);transform:translateY(-4px)}
+.lv .p{font-family:"IBM Plex Mono",monospace;font-size:25px;font-weight:600;white-space:nowrap}
+.lv.tp .p{color:var(--long)} .lv.sl .p{color:var(--short)} .lv.en .p{color:var(--paper)}
+
+.notes{padding:24px 30px;display:flex;flex-direction:column;gap:18px}
+.notes h4{margin:0 0 8px;font-size:12px;letter-spacing:.24em;color:var(--gold);font-weight:700}
+.notes ul{margin:0;padding-left:16px}
+.notes li{font-size:15px;line-height:1.85;color:var(--note)}
+
+.foot{position:relative;z-index:1;flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:20px 30px}
+.rr{display:flex;align-items:center;gap:16px}
+.rrlabel{font-size:12px;letter-spacing:.22em;color:var(--gold);font-weight:700}
+.rrval{font-family:"Archivo Black",sans-serif;font-size:34px;color:var(--paper);letter-spacing:.02em}
+.bar{width:220px;height:8px;display:flex;border:1px solid var(--line)}
+.bar i{display:block;height:100%}
+.bar .r{background:var(--short)} .bar .w{background:var(--long)}
+.brand{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.brand img{display:none;height:64px;width:auto;object-fit:contain}
+.brand img.on{display:block}
+.brand .bn{font-family:"Archivo Black",sans-serif;font-size:22px;letter-spacing:.06em}
+.brand .bs{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.34em;color:var(--dim);margin-top:3px}
+.rrval{white-space:nowrap}
+.disc{position:relative;z-index:1;flex:0 0 auto;border-top:1px solid var(--line);padding:14px 30px 18px;
+  font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.08em;color:var(--disc)}
+/* ============ 響應式：手機 ============ */
+@media(max-width:980px){
+  .wrap{grid-template-columns:1fr !important;padding:12px;gap:14px}
+  .panel{position:static !important;padding:16px;order:2}
+  .stage{order:1}
+  /* 手機：風格列不固定在頂端，隨頁面捲走，避免遮住內容 */
+  .nav{position:static !important;padding:10px 12px;
+    flex-wrap:nowrap !important;overflow-x:auto;
+    -webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .nav::-webkit-scrollbar{display:none}
+  .nav button{flex:0 0 auto;padding:7px 13px;font-size:11px}
+  .navlabel{flex:0 0 auto}
+  .row{grid-template-columns:1fr 1fr}
+  .actions{position:sticky;bottom:0;background:var(--panel);padding-top:10px;margin-top:16px;
+    padding-bottom:calc(env(safe-area-inset-bottom) + 6px)}
+  body{padding-bottom:env(safe-area-inset-bottom)}
+}
+@media(max-width:520px){
+  .row{grid-template-columns:1fr}
+  .seg{grid-template-columns:1fr}
+}
+/* 面板分組收合 */
+.panel details{border-top:1px solid var(--line);margin-top:14px;padding-top:10px}
+.panel details>summary{cursor:pointer;font-size:12px;letter-spacing:.16em;color:var(--gold);
+  font-weight:700;list-style:none;padding:4px 0}
+.panel details>summary::-webkit-details-marker{display:none}
+.panel details>summary::before{content:"▸ ";display:inline-block;transition:transform .15s}
+.panel details[open]>summary::before{content:"▾ "}
+</style>
+
+<div class="nav" id="nav">
+  <span class="navlabel">公版風格</span>  <button data-t="ink" class="on">墨夜 Ink</button>
+  <button data-t="paper">日光 Paper</button>
+  <button data-t="brutal">粗獷 Brutal</button>
+  <button data-t="stub">票根 Stub</button>
+  <button data-t="poster">海報 Poster</button>
+  <button data-t="receipt">收據 Receipt</button>
+  <button data-t="editorial">雜誌 Editorial</button>
+  <button data-t="crt">映像管 CRT</button>
+  <button data-t="neon">霓虹 Neon</button>
+  <button data-t="arcade">街機 Arcade</button>
+  <button data-t="film">底片 Film</button>
+  <button data-t="polaroid">拍立得 Polaroid</button>
+  <button data-t="boarding">登機證 Boarding</button>
+  <button data-t="vinyl">黑膠 Vinyl</button>
+  <button data-t="window">復古視窗 Window</button>
+  <button data-t="score">記分板 Scoreboard</button>
+  <button data-t="passport">護照 Passport</button>
+  <button data-t="cassette">卡帶 Cassette</button>
+  <button data-t="ticker">跑馬燈 Ticker</button>
+  <button data-t="dossier">機密檔案 Dossier</button>
+  <button data-t="handheld">掌機 Handheld</button>
+  <button data-t="subway">站牌 Subway</button>
+  <button data-t="holo">全息卡 Holo</button>
+  <button data-t="airmail">航空信 Airmail</button>
+  <button data-t="xray">X光片 Xray</button>
+  <button data-t="clay">黏土 Clay</button>
+  <button data-t="terminal">終端機 Terminal</button>
+  <button data-t="news">報紙 Newsprint</button>
+  <button data-t="mono">純黑白 Mono</button>
+  <button data-t="luxe">精品金 Luxe</button>
+  <span class="navlabel" style="margin-left:auto;margin-right:0">v1.1.1</span>
+</div>
+<div class="wrap">
+<div class="panel">
+  <h1>報單圖產生器</h1>
+  <p class="sub">填欄位、丟一張盤面截圖，即時預覽，下載 1080×1080 分享圖。股票、期貨、外匯、加密貨幣皆適用。</p>
+
+  <label>商品 / 標的</label><input id="f_pair" value="BTCUSDT.P">
+  <div class="row">
+    <div><label>週期</label><input id="f_tf" value="1H"></div>
+    <div><label>單號</label><input id="f_no" value="#0142"></div>
+  </div>
+
+  <label>方向</label>
+  <div class="seg" id="dirseg" style="grid-template-columns:1fr 1fr 1fr">
+    <button data-v="LONG" class="on">多單 LONG</button>
+    <button data-v="SHORT">空單 SHORT</button>
+    <button data-v="NONE">不顯示章</button>
+  </div>
+
+  <div class="row">
+    <div><label>當前價格</label><input id="f_now" value="64,298.6"></div>
+    <div><label>漲跌幅</label><input id="f_chg" value="+1.42%"></div>
+  </div>
+
+  <label>進場區間</label><input id="f_entry" value="64,100 – 64,300">
+  <div class="row">
+    <div><label>停損</label><input id="f_sl" value="63,650"></div>
+    <div><label>目標</label><input id="f_tp" value="64,950"></div>
+  </div>
+  <label>盈虧比</label><input id="f_rr" value="1 : 1.6">
+
+  <label>趨勢結構（一行一點）</label>
+  <textarea id="f_a">高點上移，結構偏多
+回踩做多，順勢操作</textarea>
+  <label>關鍵依據（一行一點）</label>
+  <textarea id="f_b">EMA 支撐有效
+Volume Profile 支撐
+市場時段：倫敦 / 紐約重疊</textarea>
+
+  <label>品牌名 / 標語</label>
+  <div class="row">
+    <div><input id="f_bn" value="YOUR BRAND"></div>
+    <div><input id="f_bs" value="TRADE · WITH · PLAN"></div>
+  </div>
+  <label>免責聲明</label><input id="f_disc" value="僅供教學交流，非投資建議，請自行控管風險與部位">
+
+  <label>品牌 LOGO（可留空用文字）</label>
+  <div class="drop" id="ldrop" style="padding:14px 12px">點此上傳 LOGO 圖檔</div>
+  <input type="file" id="lfile" accept="image/*" hidden>
+  <button id="lclear" style="display:none;width:100%;margin-top:8px;padding:9px;border-radius:8px;border:1px solid var(--line);background:#0B0E12;color:var(--short);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer">移除 LOGO，改回文字</button>
+  <div class="row" style="margin-top:8px">
+    <div><label>LOGO 高度 px</label><input id="f_lh" type="number" value="64"></div>
+    <div><label>顯示文字標語</label><select id="f_lshow"><option value="1">顯示</option><option value="0">隱藏</option></select></div>
+  </div>
+
+  <label>盤面截圖</label>
+  <div class="drop" id="drop">點此選檔，或直接拖曳 / Ctrl+V 貼上</div>
+  <input type="file" id="file" accept="image/*" hidden>
+  <div id="imgctl" style="display:none;margin-top:10px">
+    <label>縮放</label><input id="f_zoom" type="range" min="10" max="400" value="100" style="padding:0">
+    <div class="hint" id="zoominfo" style="margin-top:6px">原圖 0×0　顯示 100%</div>
+    <div class="hint" style="margin-top:4px">預覽圖上<b>直接拖曳</b>移動，<b>滾輪</b>縮放。100% = 原圖像素 1:1。</div>
+    <div class="seg" style="grid-template-columns:1fr 1fr 1fr;margin-top:8px">
+      <button id="imgfitw">符合寬度</button>
+      <button id="imgfill">填滿</button>
+      <button id="imgreset">1:1 原圖</button>
+    </div>
+  </div>
+
+  <label style="display:flex;align-items:center;gap:8px;margin-top:16px;letter-spacing:0;font-size:12px;color:var(--paper)">
+    <input type="checkbox" id="f_exp2x" style="width:auto"> 匯出 2160px（文字更銳利，圖片會被放大）
+  </label>
+  <div class="actions">
+    <button id="save">下載 PNG</button>
+    <button id="copy">複製到剪貼簿</button>
+  </div>
+  <p class="hint">匯出寬度 1080px。圖片只在你瀏覽器裡處理，不會上傳。</p>
+</div>
+
+<div class="stage">
+<div id="scaler">
+<div id="card" data-dir="LONG">
+  <div class="head">
+    <div class="id">
+      <div class="eyebrow" id="c_no">#0142</div>
+      <div class="pair" id="c_pair">BTCUSDT.P</div>
+      <div class="tf" id="c_tf">1H · 盤面分析</div>
+    </div>
+    <div class="now">
+      <div class="k">當前價格</div>
+      <div class="v" id="c_now">64,298.6</div>
+      <div class="chg" id="c_chg">+1.42%</div>
+    </div>
+  </div>
+
+  <div class="chart" id="chart">
+    <span>放上你的盤面截圖</span>
+    <div class="stamp" id="c_stamp">LONG<small id="c_stampzh">多單</small></div>
+  </div>
+
+  <div class="grid">
+    <div class="levels">
+      <div class="lv en"><span class="n">進場區間</span><span class="d"></span><span class="p" id="c_entry">64,100 – 64,300</span></div>
+      <div class="lv sl"><span class="n">停損價格</span><span class="d"></span><span class="p" id="c_sl">63,650</span></div>
+      <div class="lv tp"><span class="n">目標價格</span><span class="d"></span><span class="p" id="c_tp">64,950</span></div>
+    </div>
+    <div class="notes">
+      <div><h4>趨勢結構</h4><ul id="c_a"></ul></div>
+      <div><h4>關鍵依據</h4><ul id="c_b"></ul></div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <div class="rr">
+      <span class="rrlabel">盈虧比</span>
+      <span class="rrval" id="c_rr">1 : 1.6</span>
+      <span class="bar"><i class="r" id="bar_r" style="width:38%"></i><i class="w" id="bar_w" style="width:62%"></i></span>
+    </div>
+    <div class="brand"><img id="c_logo" alt=""><div class="bn" id="c_bn">YOUR BRAND</div><div class="bs" id="c_bs">TRADE · WITH · PLAN</div></div>
+  </div>
+  <div class="disc" id="c_disc">僅供教學交流，非投資建議，請自行控管風險與部位</div>
+</div>
+</div>
+</div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+let dir="LONG";
+
+function lines(t,el){el.innerHTML="";t.split("\n").map(s=>s.trim()).filter(Boolean)
+  .forEach(s=>{const li=document.createElement("li");li.textContent=s;el.appendChild(li)})}
+
+function rrBar(s){
+  const m=s.match(/([\d.]+)\s*[:：]\s*([\d.]+)/);
+  if(!m)return;const a=+m[1],b=+m[2],t=a+b;
+  $("bar_r").style.width=(a/t*100)+"%";$("bar_w").style.width=(b/t*100)+"%";
+}
+
+function render(){
+  $("card").dataset.dir=dir;
+  $("card").style.removeProperty("--dir");
+  $("c_stamp").style.display = dir==="NONE" ? "none" : "";
+  $("c_no").textContent=$("f_no").value;
+  $("c_pair").textContent=$("f_pair").value;
+  $("c_tf").textContent=$("f_tf").value+" · 盤面分析";
+  $("c_now").textContent=$("f_now").value;
+  const cv=$("f_chg").value.trim();
+  const ce=$("c_chg"); ce.textContent=cv;
+  ce.className="chg"+(/^-/.test(cv)?" dn":(/^\+|^[0-9]/.test(cv)?" up":""));
+  $("c_entry").textContent=$("f_entry").value;
+  $("c_sl").textContent=$("f_sl").value;
+  $("c_tp").textContent=$("f_tp").value;
+  $("c_rr").textContent=$("f_rr").value; rrBar($("f_rr").value);
+  if(dir!=="NONE"){
+    $("c_stamp").firstChild.textContent=dir;
+    $("c_stampzh").textContent=dir==="LONG"?"多單":"空單";
+  }
+  $("c_bn").textContent=$("f_bn").value;
+  $("c_bs").textContent=$("f_bs").value;
+  {
+    const bn=($("f_bn").value||"SIGNAL").trim();
+    const cardEl=$("card");
+    cardEl.style.setProperty("--brandbar", JSON.stringify(bn+" — 盤面分析"));
+    cardEl.style.setProperty("--termbar", JSON.stringify(
+      "user@"+bn.toLowerCase().replace(/[^a-z0-9]+/g,"")+":~/signal$"));
+    const mseed=(bn.toUpperCase().replace(/[^A-Z0-9]+/g,"<")||"SIGNAL");
+    cardEl.style.setProperty("--mrz", JSON.stringify(
+      ("P<"+mseed+"<<"+"<".repeat(60)).slice(0,46)));
+  }
+  $("c_logo").style.height=($("f_lh").value||64)+"px";
+  $("c_bs").style.display=$("f_lshow").value==="1"?"":"none";
+  $("c_disc").textContent=$("f_disc").value;
+  lines($("f_a").value,$("c_a")); lines($("f_b").value,$("c_b"));
+}
+document.querySelectorAll(".panel input,.panel textarea,.panel select").forEach(el=>{
+  el.addEventListener("input",render); el.addEventListener("change",render);
+});
+$("dirseg").addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b)return;
+  dir=b.dataset.v;
+  document.querySelectorAll("#dirseg button").forEach(x=>x.classList.toggle("on",x===b));
+  render();
+});
+
+/* 圖片載入 */
+let imgTf={x:0,y:0,z:1};
+function applyTf(){
+  const im=$("chart").querySelector("img"); if(!im)return;
+  im.style.transform="translate(-50%,-50%) translate("+imgTf.x+"px,"+imgTf.y+"px) scale("+imgTf.z+")";
+  $("f_zoom").value=Math.round(imgTf.z*100);
+  const z=$("zoominfo");
+  if(z) z.textContent="原圖 "+(im.naturalWidth||0)+"×"+(im.naturalHeight||0)
+        +"　顯示 "+Math.round(imgTf.z*100)+"%";
+}
+function fitWidth(){
+  const im=$("chart").querySelector("img"); if(!im||!im.naturalWidth)return;
+  const cw=$("chart").clientWidth||1080;
+  imgTf={x:0,y:0,z:cw/im.naturalWidth}; applyTf();
+}
+function fillArea(){
+  const im=$("chart").querySelector("img"); if(!im||!im.naturalWidth)return;
+  const c=$("chart");
+  imgTf={x:0,y:0,z:Math.max(c.clientWidth/im.naturalWidth,c.clientHeight/im.naturalHeight)};
+  applyTf();
+}
+function setImg(file){
+  if(!file||!file.type.startsWith("image/"))return;
+  const url=URL.createObjectURL(file);
+  const c=$("chart");
+  c.querySelectorAll("img,span").forEach(n=>n.remove());
+  const img=new Image(); img.draggable=false;
+  img.onload=()=>{ imgTf={x:0,y:0,z:1}; applyTf(); };
+  img.src=url; c.prepend(img);
+  imgTf={x:0,y:0,z:1};
+  $("imgctl").style.display="block";
+  attachDrag(img);
+}
+function attachDrag(img){
+  let sx=0,sy=0,ox=0,oy=0,on=false;
+  const down=e=>{on=true;img.classList.add("dragging");
+    const p=e.touches?e.touches[0]:e; sx=p.clientX;sy=p.clientY;ox=imgTf.x;oy=imgTf.y;
+    e.preventDefault();};
+  const move=e=>{if(!on)return;
+    const p=e.touches?e.touches[0]:e;
+    const sc=$("scaler").getBoundingClientRect().width/1082||1;
+    imgTf.x=ox+(p.clientX-sx)/sc; imgTf.y=oy+(p.clientY-sy)/sc; applyTf(); e.preventDefault();};
+  const up=()=>{on=false;img.classList.remove("dragging");};
+  img.addEventListener("mousedown",down); img.addEventListener("touchstart",down,{passive:false});
+  window.addEventListener("mousemove",move); window.addEventListener("touchmove",move,{passive:false});
+  window.addEventListener("mouseup",up); window.addEventListener("touchend",up);
+  img.addEventListener("wheel",e=>{
+    e.preventDefault();
+    imgTf.z=Math.min(3,Math.max(.5,imgTf.z*(e.deltaY<0?1.06:0.94))); applyTf();
+  },{passive:false});
+}
+$("f_zoom").addEventListener("input",e=>{imgTf.z=e.target.value/100;applyTf()});
+$("imgreset").onclick=()=>{imgTf={x:0,y:0,z:1};applyTf()};
+$("imgfitw").onclick=fitWidth;
+$("imgfill").onclick=fillArea;
+
+$("ldrop").onclick=()=>$("lfile").click();
+$("lfile").onchange=e=>{
+  const f=e.target.files[0]; if(!f||!f.type.startsWith("image/"))return;
+  const rd=new FileReader();
+  rd.onload=()=>{const i=$("c_logo");i.src=rd.result;i.classList.add("on");
+    $("c_bn").style.display="none";$("ldrop").textContent="已載入 LOGO（點此更換）";
+    $("lclear").style.display="block";render();saveCfg();};
+  rd.readAsDataURL(f);
+};
+$("lclear").onclick=()=>{
+  const i=$("c_logo"); i.classList.remove("on"); i.removeAttribute("src");
+  $("c_bn").style.display="";
+  $("ldrop").textContent="點此上傳 LOGO 圖檔";
+  $("lfile").value=""; $("lclear").style.display="none"; render(); saveCfg();
+};
+
+$("nav").addEventListener("click",e=>{
+  const b=e.target.closest("button[data-t]"); if(!b)return;
+  $("card").dataset.theme=b.dataset.t;
+  document.querySelectorAll("#nav button").forEach(x=>x.classList.toggle("on",x===b));
+  render();
+});
+
+$("drop").onclick=()=>$("file").click();
+$("file").onchange=e=>setImg(e.target.files[0]);
+["dragover","dragleave","drop"].forEach(t=>$("drop").addEventListener(t,e=>{
+  e.preventDefault(); $("drop").classList.toggle("hot",t==="dragover");
+  if(t==="drop")setImg(e.dataTransfer.files[0]);
+}));
+window.addEventListener("paste",e=>{
+  for(const it of e.clipboardData.items) if(it.type.startsWith("image/")) setImg(it.getAsFile());
+});
+
+/* 縮放預覽 */
+function fit(){
+  const st=document.querySelector(".stage");
+  const s=Math.min(1,st.clientWidth/1082);
+  $("scaler").style.transform="scale("+s+")";
+  st.style.height=(1082*s+20)+"px";
+}
+window.addEventListener("resize",fit);
+
+async function shot(){
+  const sc=$("scaler"), t=sc.style.transform;
+  window.scrollTo(0,0);
+  sc.style.transform="none";
+  await new Promise(r=>setTimeout(r,80));
+  const cs=getComputedStyle($("card"));
+  const grad=cs.backgroundImage&&cs.backgroundImage!=="none";
+  const bg=grad?null:(cs.backgroundColor||"#0B0D10");
+  const S=(document.getElementById("f_exp2x")||{}).checked?2:1;
+  const cv=await html2canvas($("card"),{
+    backgroundColor:bg,scale:S,useCORS:true,
+    width:1080,height:1080,windowWidth:1200,windowHeight:1400,
+    scrollX:0,scrollY:-window.scrollY
+  });
+  sc.style.transform=t;
+  const N=1080*S;
+  const out=document.createElement("canvas");
+  out.width=out.height=N;
+  const g=out.getContext("2d");
+  g.fillStyle=bg||cs.backgroundColor||"#0B0D10";g.fillRect(0,0,N,N);
+  g.drawImage(cv,0,0,N,N);
+  return out;
+}
+$("save").onclick=async()=>{
+  const cv=await shot(); const a=document.createElement("a");
+  a.download=($("f_pair").value+"_"+$("f_no").value+".png").replace(/[#\s]/g,"");
+  a.href=cv.toDataURL("image/png"); a.click();
+};
+$("copy").onclick=async()=>{
+  const cv=await shot();
+  cv.toBlob(async b=>{
+    try{await navigator.clipboard.write([new ClipboardItem({"image/png":b})]);$("copy").textContent="已複製";
+      setTimeout(()=>$("copy").textContent="複製到剪貼簿",1600);}
+    catch{$("copy").textContent="瀏覽器不支援，請用下載";}
+  });
+};
+
+/* ---- 設定記憶：品牌、風格、免責聲明會被保留 ---- */
+const SKEY="signalcard.v1";
+const PERSIST=["f_bn","f_bs","f_disc","f_tf","f_lh","f_lshow"];
+function saveCfg(){
+  try{
+    const o={theme:$("card").dataset.theme||"ink",logo:$("c_logo").getAttribute("src")||""};
+    PERSIST.forEach(k=>o[k]=$(k).value);
+    localStorage.setItem(SKEY,JSON.stringify(o));
+  }catch(e){}
+}
+function loadCfg(){
+  try{
+    const o=JSON.parse(localStorage.getItem(SKEY)||"null"); if(!o)return;
+    PERSIST.forEach(k=>{if(o[k]!==undefined)$(k).value=o[k]});
+    if(o.theme){
+      $("card").dataset.theme=o.theme;
+      document.querySelectorAll("#nav button").forEach(x=>
+        x.classList.toggle("on",x.dataset.t===o.theme));
+    }
+    if(o.logo){
+      const i=$("c_logo"); i.src=o.logo; i.classList.add("on");
+      $("c_bn").style.display="none"; $("lclear").style.display="block";
+      $("ldrop").textContent="已載入 LOGO（點此更換）";
+    }
+  }catch(e){}
+}
+document.querySelectorAll(".panel input,.panel textarea,.panel select")
+  .forEach(el=>el.addEventListener("change",saveCfg));
+$("nav").addEventListener("click",saveCfg);
+
+loadCfg(); render(); setTimeout(fit,300); window.addEventListener("load",fit);
+
+/* ---- Service Worker ---- */
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+}
+</script>
