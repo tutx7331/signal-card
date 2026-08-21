@@ -799,6 +799,19 @@ label.chk{display:flex;align-items:center;gap:9px;margin-top:18px;letter-spacing
   text-transform:none;cursor:pointer}
 label.chk input{width:auto}
 #zoominfo{font-family:"IBM Plex Mono",monospace;letter-spacing:.04em}
+#previewLayer{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.95);
+  display:flex;flex-direction:column}
+#previewLayer .pv-bar{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;
+  gap:12px;padding:calc(14px + env(safe-area-inset-top)) 18px 14px;
+  border-bottom:1px solid var(--ui-line);color:#FFF;font-size:13px;letter-spacing:.06em}
+#previewLayer .pv-bar button{padding:8px 16px;border:1px solid #FFF;background:#FFF;color:#000;
+  border-radius:0;font-family:inherit;font-size:12px;font-weight:900;letter-spacing:.14em;cursor:pointer}
+#previewLayer .pv-body{flex:1 1 auto;overflow:auto;display:flex;align-items:flex-start;
+  justify-content:center;padding:16px calc(16px + env(safe-area-inset-left)) 
+  calc(16px + env(safe-area-inset-bottom))}
+#previewLayer img{max-width:100%;height:auto;display:block;
+  -webkit-touch-callout:default;user-select:auto}
+.actions button:disabled{opacity:.55;cursor:default}
 
 /* ---------- 卡片本體（匯出 1080px） ---------- */
 .stage{display:flex;justify-content:center;overflow:hidden}
@@ -959,7 +972,7 @@ label.chk input{width:auto}
   <button data-t="news">報紙 Newsprint</button>
   <button data-t="mono">純黑白 Mono</button>
   <button data-t="luxe">精品金 Luxe</button>
-  <span class="navlabel" style="margin-left:auto;margin-right:0">v1.3.0</span>
+  <span class="navlabel" style="margin-left:auto;margin-right:0">v1.3.1</span>
 </div>
 <div class="wrap">
 <div class="panel">
@@ -1042,6 +1055,7 @@ Volume Profile 支撐
     <button id="save">下載 PNG</button>
     <button id="copy">複製到剪貼簿</button>
   </div>
+  <p class="hint" id="iosTip" style="display:none">iOS：按「下載 PNG」會開啟系統分享單，選<b>「儲存影像」</b>即可存到照片，也可直接傳到群組。</p>
   <p class="hint">匯出寬度 1080px。圖片只在你瀏覽器裡處理，不會上傳。</p>
 </div>
 
@@ -1350,18 +1364,69 @@ async function shot(){
   g.drawImage(cv,0,0,out.width,out.height);   /* 完整畫入，不裁邊 */
   return out;
 }
+function fileName(){
+  return ($("f_pair").value+"_"+$("f_no").value+".png").replace(/[#\s\/\\:]/g,"");
+}
+function toBlob(cv){
+  return new Promise(r=>cv.toBlob(b=>r(b),"image/png"));
+}
+/* 長按儲存的備援檢視 */
+function showPreview(url){
+  const w=document.createElement("div");
+  w.id="previewLayer";
+  w.innerHTML='<div class="pv-bar">長按圖片 → 儲存到照片'
+    +'<button id="pvClose">關閉</button></div>'
+    +'<div class="pv-body"><img src="'+url+'" alt=""></div>';
+  document.body.appendChild(w);
+  w.querySelector("#pvClose").onclick=()=>{w.remove();URL.revokeObjectURL(url);};
+}
+function busy(btn,on,txt){
+  btn.disabled=on;
+  if(on){btn.dataset.t=btn.textContent;btn.textContent=txt||"處理中…";}
+  else if(btn.dataset.t){btn.textContent=btn.dataset.t;}
+}
 $("save").onclick=async()=>{
-  const cv=await shot(); const a=document.createElement("a");
-  a.download=($("f_pair").value+"_"+$("f_no").value+".png").replace(/[#\s]/g,"");
-  a.href=cv.toDataURL("image/png"); a.click();
+  const btn=$("save");
+  busy(btn,true,"產生中…");
+  try{
+    const cv=await shot();
+    const blob=await toBlob(cv);
+    const name=fileName();
+    const file=new File([blob],name,{type:"image/png"});
+    /* 1. 系統分享單：iOS / Android 都能存進相簿或直接傳到群組 */
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      try{ await navigator.share({files:[file]}); busy(btn,false); return; }
+      catch(err){ if(err&&err.name==="AbortError"){busy(btn,false);return;} }
+    }
+    /* 2. 桌機：直接下載 */
+    const a=document.createElement("a");
+    if("download" in a){
+      const url=URL.createObjectURL(blob);
+      a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),4000);
+      busy(btn,false); return;
+    }
+    /* 3. 最後備援：顯示圖片供長按儲存 */
+    showPreview(URL.createObjectURL(blob));
+  }catch(e){ alert("匯出失敗，請再試一次"); }
+  busy(btn,false);
 };
 $("copy").onclick=async()=>{
-  const cv=await shot();
-  cv.toBlob(async b=>{
-    try{await navigator.clipboard.write([new ClipboardItem({"image/png":b})]);$("copy").textContent="已複製";
-      setTimeout(()=>$("copy").textContent="複製到剪貼簿",1600);}
-    catch{$("copy").textContent="瀏覽器不支援，請用下載";}
-  });
+  const btn=$("copy");
+  busy(btn,true,"產生中…");
+  try{
+    const cv=await shot();
+    const blob=await toBlob(cv);
+    if(navigator.clipboard&&window.ClipboardItem){
+      try{
+        await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);
+        busy(btn,false); btn.textContent="已複製";
+        setTimeout(()=>btn.textContent="複製到剪貼簿",1600); return;
+      }catch(e){}
+    }
+    showPreview(URL.createObjectURL(blob));   /* iOS 走長按儲存 */
+  }catch(e){ alert("匯出失敗，請再試一次"); }
+  busy(btn,false);
 };
 
 /* ---- 設定記憶：品牌、風格、免責聲明會被保留 ---- */
@@ -1394,6 +1459,14 @@ document.querySelectorAll(".panel input,.panel textarea,.panel select")
   .forEach(el=>el.addEventListener("change",saveCfg));
 $("nav").addEventListener("click",saveCfg);
 
+(function(){
+  const iOS=/iP(hone|ad|od)/.test(navigator.userAgent)
+    ||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+  if(iOS){
+    $("save").textContent="下載 / 分享";
+    $("iosTip").style.display="block";
+  }
+})();
 loadCfg(); applyMode(); render(); setTimeout(fit,300); window.addEventListener("load",fit);
 if(window.ResizeObserver)new ResizeObserver(()=>fit()).observe($("card"));
 
