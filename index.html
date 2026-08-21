@@ -970,7 +970,7 @@ label.chk input{width:auto}
   <button data-t="news">報紙 Newsprint</button>
   <button data-t="mono">純黑白 Mono</button>
   <button data-t="luxe">精品金 Luxe</button>
-  <span class="navlabel" style="margin-left:auto;margin-right:0">v1.3.2</span>
+  <span class="navlabel" style="margin-left:auto;margin-right:0">v1.3.3</span>
 </div>
 <div class="wrap">
 <div class="panel">
@@ -1317,8 +1317,9 @@ async function shot(){
   window.scrollTo(0,0);
   /* 關鍵：把卡片移出縮放層，確保截圖時沒有任何祖先 transform */
   const holder=document.createElement("div");
-  holder.style.cssText="position:fixed;left:0;top:0;width:1080px;z-index:-1;"+
-    "opacity:1;pointer-events:none;overflow:visible";
+  /* 移到可視區之外：html2canvas 仍能量到版面，但使用者不會看到閃現 */
+  holder.style.cssText="position:fixed;left:-20000px;top:0;width:1080px;"+
+    "z-index:0;pointer-events:none;overflow:visible";
   document.body.appendChild(holder);
   holder.appendChild($("card"));
   await new Promise(r=>setTimeout(r,140));
