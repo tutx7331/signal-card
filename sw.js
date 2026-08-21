@@ -3,7 +3,7 @@
         跨網域資源（字型、html2canvas）用 cache-first
    改版時把 VERSION 加一，舊快取會自動清除。 */
 
-const VERSION = 'v1.3.1';
+const VERSION = 'v1.3.2';
 const CACHE = `signal-card-${VERSION}`;
 
 const CORE = [

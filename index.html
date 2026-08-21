@@ -925,7 +925,8 @@ label.chk input{width:auto}
   .nav button{flex:0 0 auto;padding:7px 13px;font-size:11px}
   .navlabel{flex:0 0 auto}
   .row{grid-template-columns:1fr 1fr}
-  .actions{position:sticky;bottom:0;background:var(--panel);padding-top:10px;margin-top:16px;
+  .actions{position:sticky;bottom:0;background:var(--ui-surface);
+    border-top:1px solid var(--ui-line);padding-top:12px;margin-top:18px;
     padding-bottom:calc(env(safe-area-inset-bottom) + 6px)}
   body{padding-bottom:env(safe-area-inset-bottom)}
 }
@@ -934,9 +935,6 @@ label.chk input{width:auto}
   .seg{grid-template-columns:1fr}
 }
 /* 面板分組收合 */
-.panel details{border-top:1px solid var(--line);margin-top:14px;padding-top:10px}
-.panel details>summary{cursor:pointer;font-size:12px;letter-spacing:.16em;color:var(--gold);
-  font-weight:700;list-style:none;padding:4px 0}
 .panel details>summary::-webkit-details-marker{display:none}
 .panel details>summary::before{content:"▸ ";display:inline-block;transition:transform .15s}
 .panel details[open]>summary::before{content:"▾ "}
@@ -972,7 +970,7 @@ label.chk input{width:auto}
   <button data-t="news">報紙 Newsprint</button>
   <button data-t="mono">純黑白 Mono</button>
   <button data-t="luxe">精品金 Luxe</button>
-  <span class="navlabel" style="margin-left:auto;margin-right:0">v1.3.1</span>
+  <span class="navlabel" style="margin-left:auto;margin-right:0">v1.3.2</span>
 </div>
 <div class="wrap">
 <div class="panel">
@@ -1056,7 +1054,7 @@ Volume Profile 支撐
     <button id="copy">複製到剪貼簿</button>
   </div>
   <p class="hint" id="iosTip" style="display:none">iOS：按「下載 PNG」會開啟系統分享單，選<b>「儲存影像」</b>即可存到照片，也可直接傳到群組。</p>
-  <p class="hint">匯出寬度 1080px。圖片只在你瀏覽器裡處理，不會上傳。</p>
+  <p class="hint">輸出為正方形 PNG（預設 2160px）。所有處理都在你的瀏覽器內完成，圖片不會上傳。</p>
 </div>
 
 <div class="stage">
