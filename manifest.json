@@ -1,6 +1,6 @@
 {
-  "name": "報單圖產生器 · Signal Card",
-  "short_name": "報單圖",
+  "name": "Trading Signal Card Generator 報單圖產生器",
+  "short_name": "TSCG",
   "description": "交易報單分享圖產生器。填入進出場價位、加上盤面截圖，輸出 1080×1080 圖片。全在瀏覽器端運算，不上傳任何資料。",
   "start_url": "./",
   "scope": "./",
